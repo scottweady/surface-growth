@@ -23,11 +23,11 @@ fig.PaperPositionMode = 'auto';
 % Set defaults
 set(fig,'defaultlinelinewidth', 1.25 * sc)
 set(fig,'defaultAxesLineWidth', 1 * sc)
-set(fig,'defaultAxesFontSize', 9 * sc)
+set(fig,'defaultAxesFontSize', 8 * sc)
 set(fig,'defaulttextinterpreter',tex); 
 set(fig,'defaultAxesTickLabelInterpreter',tex); 
 set(fig,'defaultLegendInterpreter',tex);
-set(fig,'defaultLegendFontSize', 9 * sc);
+set(fig,'defaultLegendFontSize', 8 * sc);
 set(fig, 'defaultLegendEdgeColor', 'none');
 set(fig,{'DefaultAxesXColor','DefaultAxesYColor','DefaultAxesZColor'},{'k','k','k'});
 set(fig,'DefaultTextColor','k');

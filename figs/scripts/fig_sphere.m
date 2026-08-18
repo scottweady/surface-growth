@@ -1,5 +1,6 @@
 
-addpath('utils')
+addpath('../../utils')
+addpath('../../src')
 
 c_growth = [0.1 0.6 0.3];
 c_pressure = [0.1 0.1 0.6];
@@ -8,7 +9,7 @@ c_velocity = [0.6 0.1 0.6];
 %%
 close all
 
-fig = journal_figure([6.5 2.5], 2);
+fig = journal_figure([6.75 2.5], 2);
 
 % Range of sphere radii
 Rplt = 10 + [0, 2.^(1:5)];
@@ -60,7 +61,7 @@ for R = Rspan
   AA = [0, A];
 
   % RHS function
-  F = @(Theta) darcy_sphere(Theta, lambda, R, N);
+  F = @(Theta) darcySphere(Theta, lambda, R, N);
   
   Hsave = [0, H];
 
@@ -135,17 +136,18 @@ ylim([0 Af/(4*pi)])
 sp1 = subplot(1, 2, 1);
 
 nspan = round(linspace(1, length(Hplt)-1, 8));
-cmap = flipud(cmocean('algae', length(nspan)+1));
+cmap = cmocean('algae', length(nspan)+1);
+cmap = cmap(2:end,:);
 
 hm1 = 0;
 for n = 1 : length(nspan)
-  xi = linspace(0, 2 * pi, 256);
+  xi = linspace(0, 2 * pi, 32);
   h = Hplt(nspan(n), 2);
-  eta = linspace(hm1, h, 256);
+  eta = linspace(hm1, h, 32);
   [eta, xi] = meshgrid(eta, xi);
   surf(10 * cos(xi) .* sin(eta), 10 * sin(xi) .* sin(eta), 10 * cos(eta), 'FaceColor', cmap(n, :), 'EdgeColor', 'none'), hold on
 
-  xi = linspace(0, 2 * pi, 256);
+  xi = linspace(0, 2 * pi, 32);
   h = Hplt(nspan(n), 2);
   a = 10;
   plot3(a * cos(xi) .* sin(h), a * sin(xi) .* sin(h), a * cos(h) + 0 * xi, 'Color', cmap(n, :).^1.5), hold on
@@ -195,12 +197,11 @@ tbb.Position(2) = sum(sp2.Position([2 4])) - tbb.Position(4);
 tba.Position(2) = tbb.Position(2);
 tba.Position(1) = 0.6;
 
-print('../output/fig3', '-dpdf')
-
+exportgraphics(fig, '../output/fig3.pdf', 'ContentType', 'vector')
 
 %%
 close all
-fig = journal_figure([6.5 2.5], 2);
+fig = journal_figure([6.75 2.5], 2);
 
 Rplt = 10 + [0, 2.^(1:5)];
 lambda = 1;
@@ -216,7 +217,7 @@ H = pi / 2;
 
 for R = Rplt
 
-  [U, p, h, u] = darcy_sphere(H, lambda, R, N);
+  [U, p, h, u] = darcySphere(H, lambda, R, N);
 
   subplot(1, 2, 1)
   plot(h, p, 'Color', cmap_pressure(nc, :), 'DisplayName', sprintf('$R$ = %2d', R)), hold on
@@ -269,12 +270,12 @@ tbb.Position(2) = sum(sp2.Position([2 4])) - tbb.Position(4);
 
 tba.Position(2) = tbb.Position(2);
 
-print('../output/fig2', '-dpdf')
+exportgraphics(fig, '../output/fig2.pdf', 'ContentType', 'vector')
 
 %%
 close all
 
-fig = journal_figure([6.5 2.25], 2);
+fig = journal_figure([6.75 2.25], 2);
 
 lspan = [0 0.01 0.1 1];
 
@@ -293,7 +294,7 @@ N = 100;
 
 for lambda = lspan
 
-  F = @(H) darcy_sphere(H, lambda, R, N);
+  F = @(H) darcySphere(H, lambda, R, N);
   Asave = [];
 
   % Main loop
@@ -326,7 +327,7 @@ for lambda = Lspan(2 : end)
   t = 0;
   
   H = H0;
-  F = @(H) darcy_sphere(H, lambda, R, N);
+  F = @(H) darcySphere(H, lambda, R, N);
   dAdt = @(H) -2 * pi * sin(H) * F(H);
   
   hmax = fminsearch(dAdt, hmax);
@@ -369,5 +370,5 @@ tba.Position(2) = tbb.Position(2);
 
 leg.Position(1) = leg.Position(1) - 0.5;
 
-print('../output/fig4', '-dpdf')
+exportgraphics(fig, '../output/fig4.pdf', 'ContentType', 'vector')
 
