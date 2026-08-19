@@ -2,9 +2,6 @@
 % Growth trajectories on spherical caps for a range of radii R, compared
 % against the flat (R -> infinity) limit.
 
-addpath('../../utils')
-addpath('../../src')
-
 c_growth = [0.1 0.6 0.3];
 
 N = 100;
@@ -22,89 +19,10 @@ lambda = 1;
 A0 = 4 * pi;
 Af = 4 * pi * 10^2;
 
-% ── Solve ────────────────────────────────────────────────────────────────────
+% ── Load ─────────────────────────────────────────────────────────────────────
+% Solved by scripts/sphereGrowth.m, run via data/makedata.m
 
-cache = '../../data/fig3.mat';
-
-if isfile(cache)
-  load(cache, 'Hplt', 'ts', 'AAall', 'AAinf')
-else
-  ts = [];
-  AAall = cell(length(Rspan), 1);
-
-  for k = 1:length(Rspan)
-    R = Rspan(k);
-
-    clc, fprintf("%f of %f\n", R, Rspan(end))
-
-    dt = 0.1;
-    tf = 100;
-    t = 0;
-
-    H0 = acos(1 - A0 / (2 * pi * R^2));
-    H = H0;
-
-    Hf = acos(1 - Af / (2 * pi * R^2));
-
-    A = 2 * pi * R^2 * (1 - cos(H0));
-    AA = [0, A];
-
-    F = @(Theta) growthFlowSphere(Theta, lambda, R, N);
-
-    Hsave = [0, H];
-
-    while t < tf && H < Hf
-
-      H = rk4(H, F, dt, 1);
-      t = t + dt;
-
-      Hsave = [Hsave; t, H];
-
-      A = 2 * pi * R^2 * (1 - cos(H));
-      AA = [AA; t, A];
-
-    end
-
-    if R == 10
-      Hplt = Hsave;
-    end
-
-    % Reverse at high res to find final time
-    while H > Hf
-      H = rk4(H, F, -0.01*dt, 1);
-      t = t - 0.01*dt;
-    end
-
-    ts = [ts; R, t];
-
-    AAall{k} = AA;
-
-  end
-
-  % Flat interface (R -> infinity limit, solved in closed form)
-  t = 0;
-  R = sqrt(A0 / pi);
-  A = pi * R^2;
-  AAinf = [0, A];
-
-  while A < Af
-    c = @(R) (sqrt(1 + lambda * R^2 / 2) - 1) / (2 * lambda * R^2);
-    F = @(R) 32 * c(R)^2 * R / (1 - 8 * c(R)^2 * lambda * R^2);
-    R = rk4(R, F, dt, 1);
-    t = t + dt;
-    A = pi * R^2;
-    AAinf = [AAinf; t, A];
-  end
-
-  while A > Af
-    R = rk4(R, F, -0.01*dt, 1);
-    A = pi * R^2;
-    t = t - 0.01*dt;
-  end
-  ts = [ts; inf, t];
-
-  save(cache, 'Hplt', 'ts', 'AAall', 'AAinf')
-end
+load('../../data/fig3.mat', 'Hplt', 'ts', 'AAall', 'AAinf')
 
 % ── Figure ───────────────────────────────────────────────────────────────────
 

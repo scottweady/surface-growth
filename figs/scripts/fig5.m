@@ -3,69 +3,10 @@
 % for flat, 1D-wave, and 2D-wave surfaces from the homogenized growth flow
 % equations.
 
-addpath('../../src')
-addpath('../../utils')
+% ── Load ─────────────────────────────────────────────────────────────────────
+% Solved by scripts/roughnessGrowthRate.m, run via data/makedata.m
 
-lambda = 1;
-a      = 1;   % roughness amplitude for snapshots
-
-% ── (a) Growth rate vs amplitude ─────────────────────────────────────────────
-
-cache = '../../data/fig5.mat';
-
-if isfile(cache)
-  load(cache, 'hom')
-else
-  aspan = linspace(0, 1, 16);
-  Na    = length(aspan);
-  hom   = zeros(Na, 3);
-
-  N = 31;
-  x = trigpts(N, [0 1]);
-  y = trigpts(N, [0 1]);
-  [y, x] = meshgrid(y, x);
-
-  for na = 1:Na
-    ai = aspan(na);
-
-    h1 = ai * sin(2*pi*x);
-    [K1, J1] = calcK(h1);
-    dA1dt = growthFlowHomogenized(lambda, K1, J1);
-
-    h2 = ai * sin(2*pi*x) .* sin(2*pi*y);
-    [K2, J2] = calcK(h2);
-    dA2dt = growthFlowHomogenized(lambda, K2, J2);
-
-    hom(na, :) = [ai, dA1dt/pi, dA2dt/pi];
-  end
-
-  save(cache, 'hom')
-end
-
-% ── (b)-(d) Snapshot fields ───────────────────────────────────────────────────
-
-N   = 31;
-xi  = trigpts(N, [0 1]);
-eta = trigpts(N, [0 1]);
-[eta, xi] = meshgrid(eta, xi);
-
-h_list = {zeros(N, N), ...
-          a * sin(2*pi*xi), ...
-          a * sin(2*pi*xi) .* sin(2*pi*eta)};
-
-X = cell(3,1);  Y = cell(3,1);
-U = cell(3,1);  V = cell(3,1);
-G = cell(3,1);
-
-for k = 1:3
-  [K, J] = calcK(h_list{k});
-  [~, u, v, p, xc, yc] = growthFlowHomogenized(lambda, K, J);
-  X{k} = [xc, xc(:,1)];
-  Y{k} = [yc, yc(:,1)];
-  U{k} = [u,  u(:,1)];
-  V{k} = [v,  v(:,1)];
-  G{k} = [exp(-lambda*p), exp(-lambda*p(:,1))];
-end
+load('../../data/fig5.mat', 'hom', 'X', 'Y', 'U', 'V', 'G')
 
 gr_lim = [min(cellfun(@(g) min(g(:)), G)), 1];
 
@@ -192,54 +133,4 @@ for k = 1:3
   text(ax, 0.5, -0.05, h_labels{k}, 'Units', 'normalized', ...
       'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', ...
       'Interpreter', 'latex', 'FontSize', ax.FontSize, 'Clipping', 'off')
-end
-
-function [K, J] = calcK(h)
-
-  N  = length(h);
-  D  = diffmat(N, 1, 'periodic', [0 1]);
-  I  = speye(N);
-  Dx = kron(I, D);
-  Dy = kron(D, I);
-
-  h  = h(:);
-  hx = Dx * h;
-  hy = Dy * h;
-
-  g11 = 1 + hx.^2;
-  g12 = hx .* hy;
-  g21 = hy .* hx;
-  g22 = 1 + hy.^2;
-  detg = g11 .* g22 - g12 .* g21;
-
-  ig11 =  g22 ./ detg;
-  ig12 = -g12 ./ detg;
-  ig21 = -g21 ./ detg;
-  ig22 =  g11 ./ detg;
-
-  J = sqrt(detg);
-
-  JiG11 = J .* ig11;
-  JiG12 = J .* ig12;
-  JiG21 = J .* ig21;
-  JiG22 = J .* ig22;
-
-  L = -Dx*(JiG11.*Dx) - Dx*(JiG12.*Dy) - Dy*(JiG21.*Dx) - Dy*(JiG22.*Dy);
-  e = ones(length(L), 1);
-  L = [L e; e' 0];
-
-  f1 = Dx*JiG11 + Dy*JiG12;
-  f2 = Dx*JiG12 + Dy*JiG22;
-
-  w1 = L \ [f1; 0];  w1 = w1(1:end-1);
-  w2 = L \ [f2; 0];  w2 = w2(1:end-1);
-
-  k11 = sum(JiG11 + JiG11.*(Dx*w1) + JiG12.*(Dy*w1)) / sum(J);
-  k12 = sum(JiG12 + JiG11.*(Dx*w2) + JiG12.*(Dy*w2)) / sum(J);
-  k21 = sum(JiG21 + JiG21.*(Dx*w1) + JiG22.*(Dy*w1)) / sum(J);
-  k22 = sum(JiG22 + JiG21.*(Dx*w2) + JiG22.*(Dy*w2)) / sum(J);
-
-  K = [k11 k12; k21 k22];
-  J = sum(J) / N^2;
-
 end

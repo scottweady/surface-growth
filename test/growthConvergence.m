@@ -1,17 +1,14 @@
 
-addpath('../utils')
-addpath('../src')
 addpath('../scripts')
 
 %% Temporal convergence (RK4 moving-boundary stepping)
-% Runs the growthFlowMovingBoundary.m script itself (shared workspace) at
+% Runs the growthEvolve.m script itself (shared workspace) at
 % decreasing time step sizes over a short, fixed time window.
 
 lambda = 1;
 K      = [0.1 0.0; 0.0 1.0];
 
 doPlot = false;
-doSave = false;
 
 T    = 0.2;
 NNt  = 2.^(0 : 4);
@@ -24,7 +21,7 @@ for k = 1:length(NNt)
   clc
   fprintf('Moving boundary solve temporal convergence...\n')
   fprintf('%s dt = %g\n', progressBar(k / length(NNt)), dt)
-  growthFlowMovingBoundary
+  growthEvolve
   Afin = [Afin; A];
 end
 

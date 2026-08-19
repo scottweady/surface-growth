@@ -1,5 +1,5 @@
-function [U, p, h, u] = growthFlowSphere(H, lambda, R, N)
-% GROWTHFLOWSPHERE Solve the growth flow problem on a spherical cap
+function [U, p, h, u] = growthSphere(H, lambda, R, N)
+% GROWTHSPHERE Solve the growth flow problem on a spherical cap
 %
 % Solves the nonlinear growth flow problem on a spherical cap of polar
 % angle H and radius R using a 1D Chebyshev discretization of the
@@ -31,6 +31,10 @@ function [U, p, h, u] = growthFlowSphere(H, lambda, R, N)
   L(end, :) = [zeros(1, N - 1), 1];
 
   % ── Newton iteration ─────────────────────────────────────────────────────
+  % L becomes (nearly) singular as H -> 0 (a vanishing cap) -- expected and
+  % harmless, so warnings from the linear solves below are suppressed.
+
+  warnState = warning('off', 'all');
 
   p = L \ f(zeros(N, 1));
   err = max(abs(L * p - f(p)));
@@ -50,6 +54,8 @@ function [U, p, h, u] = growthFlowSphere(H, lambda, R, N)
     iter = iter + 1;
 
   end
+
+  warning(warnState);
 
   % ── Velocity field ───────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
-function [U, p] = growthFlow(Omega, lambda, K)
-% GROWTHFLOW Solve the (anisotropic) surface-sensing growth flow problem
+function [U, p] = growth(Omega, lambda, K)
+% GROWTH Solve the (anisotropic) surface-sensing growth flow problem
 %
 % Solves the nonlinear anisotropic growth flow problem
 %   -div(K grad p) - exp(-λp) = 0
@@ -53,7 +53,7 @@ function [U, p] = growthFlow(Omega, lambda, K)
   end
 
   if err > tol
-    fprintf(' growthFlow failed with tolerance %1.4e. Error is %1.4e\n', tol, err)
+    fprintf(' growth failed with tolerance %1.4e. Error is %1.4e\n', tol, err)
   end
 
   % ── Velocity field ───────────────────────────────────────────────────────

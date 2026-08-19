@@ -1,6 +1,4 @@
 
-addpath('../utils')
-addpath('../src')
 addpath('../scripts')
 
 lambda = 1;
@@ -17,7 +15,7 @@ for k = 1:length(NN)
   clc
   fprintf('Spatial convergence for sphere...\n')
   fprintf('%s N = %d\n', progressBar(k / length(NN)), N)
-  UU = [UU; growthFlowSphere(pi/2, lambda, R, N)];
+  UU = [UU; growthSphere(pi/2, lambda, R, N)];
 end
 
 err = abs(diff(UU));
@@ -39,7 +37,7 @@ HH = [];
 
 N = 100;
 NNt = 2.^(1 : 8);
-F = @(Theta) growthFlowSphere(Theta, lambda, R, N);
+F = @(Theta) growthSphere(Theta, lambda, R, N);
 
 for k = 1:length(NNt)
   Nt = NNt(k);

@@ -1,6 +1,4 @@
 
-addpath('../utils')
-addpath('../src')
 addpath('../scripts')
 
 sphereConvergence
@@ -10,7 +8,7 @@ print(figTemporal, 'output/fig-sphere-temporal-convergence', '-dpdf')
 roughnessConvergence
 print(fig, 'output/fig-roughness-convergence', '-dpdf')
 
-growthFlowConvergence
+growthConvergence
 print(fig, 'output/fig-anisotropic-temporal-convergence', '-dpdf')
 
 homogenizationConvergence

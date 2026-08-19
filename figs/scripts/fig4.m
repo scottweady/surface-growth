@@ -2,9 +2,6 @@
 % Growth rate vs. polar angle H on a sphere for a range of sensitivities
 % lambda, and the angle of maximal growth H* as a function of lambda.
 
-addpath('../../utils')
-addpath('../../src')
-
 fig = journalFig([6.75 2.25], 2);
 
 lspan = [0 0.01 0.1 1];
@@ -12,55 +9,10 @@ Lspan = linspace(0, 1, 100);
 cmap = cmocean('algae', length(lspan) + 1);
 cmap = cmap(2 : end, :);
 
-% ── Solve ────────────────────────────────────────────────────────────────────
+% ── Load ─────────────────────────────────────────────────────────────────────
+% Solved by scripts/sphereGrowthRate.m, run via data/makedata.m
 
-cache = '../../data/fig4.mat';
-
-if isfile(cache)
-  load(cache, 'AsaveAll', 'Amax')
-else
-  hmax = pi/2;
-
-  H0 = 1e-2;
-  Hf = pi-H0;
-
-  R = 10;
-  N = 100;
-
-  AsaveAll = cell(length(lspan), 1);
-
-  for k = 1:length(lspan)
-    lambda = lspan(k);
-
-    F = @(H) growthFlowSphere(H, lambda, R, N);
-    Asave = [];
-
-    for H = linspace(H0, Hf, 100)
-      dAdt = 2 * pi * R^2 * sin(H) * F(H);
-      Asave = [Asave; H dAdt];
-    end
-
-    AsaveAll{k} = Asave;
-  end
-
-  Amax = [0 pi];
-
-  for lambda = Lspan(2 : end)
-
-    t = 0;
-
-    H = H0;
-    F = @(H) growthFlowSphere(H, lambda, R, N);
-    dAdt = @(H) -2 * pi * sin(H) * F(H);
-
-    hmax = fminsearch(dAdt, hmax);
-
-    Amax = [Amax; lambda hmax];
-
-  end
-
-  save(cache, 'AsaveAll', 'Amax')
-end
+load('../../data/fig4.mat', 'AsaveAll', 'Amax')
 
 % ── Figure ───────────────────────────────────────────────────────────────────
 

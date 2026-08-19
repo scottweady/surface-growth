@@ -3,17 +3,15 @@
 %
 % Simulates a growing domain on a flat (possibly anisotropic/homogenized)
 % surface. Starting from a circular boundary, the boundary is advanced with
-% RK4 using the velocity field from growthFlow, remeshed to equal arclength
+% RK4 using the velocity field from growth, remeshed to equal arclength
 % at every step, and the domain's surface area is tracked over time. Runs
 % until the area reaches 10x its initial value.
 %
 % Designed to be called as a script with a shared workspace (e.g. by a
-% convergence study), so that lambda, K, dt, tf, doPlot, doSave can be
-% pre-set by the caller before it runs.
+% convergence study), so that lambda, K, dt, tf, doPlot can be pre-set by
+% the caller before it runs.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-addpath('../src')
 
 % ── Parameters ───────────────────────────────────────────────────────────────
 % Fall back to defaults for anything not already set in the workspace.
@@ -32,12 +30,10 @@ J = 1.0 / K(1, 1);
 if ~exist('doPlot', 'var')
   doPlot = true;
 end
-if ~exist('doSave', 'var')
-  doSave = true;
-end
 
 if doPlot
   close all
+  fig = journalFig([6.75 3], 2);
 end
 
 % Flat domain (K represents an effective/homogenized medium)
@@ -48,10 +44,10 @@ discretize = @(xb, yb, D) surfacemesh.image(f, surfacemesh.ellipticgrid(xb, yb, 
 
 % ── Mesh ─────────────────────────────────────────────────────────────────────
 % Parametric disk with an initial boundary of unit physical area
-% (R0 = 1/sqrt(J), matching the convention in growthFlowHomogenized.m, since
+% (R0 = 1/sqrt(J), matching the convention in growthHomogenized.m, since
 % the homogenized cell's true area element is J times the flat domain's).
 
-Nref = 1;
+Nref = 2;
 Mb   = 4 * Nref;
 P    = 12;
 D    = surfacemesh.disk(P, Nref);
@@ -93,7 +89,7 @@ for nt = 1 : Nt
 
   Omega      = discretize(xb, yb, D);
   A          = surfacearea(Omega);
-  [U1, p]    = growthFlow(Omega, lambda, K);
+  [U1, p]    = growth(Omega, lambda, K);
   [ub, vb]   = extractBoundaryVelocity(U1, Mb);
 
   Xb{nt} = xb;
@@ -105,17 +101,16 @@ for nt = 1 : Nt
     fprintf('t = %.3f / %.3f\n', t, tf)
     fprintf('|Omega| / |Omega0| = %.2f\n', A / A0)
 
-    clf
     subplot(1, 2, 1)
     xbcat = cellfun(@(x) x, xb, 'UniformOutput', false);
     ybcat = cellfun(@(y) y, yb, 'UniformOutput', false);
-    plot([xbcat{:}], [ybcat{:}], 'k-')
+    plot([xbcat{:}], [ybcat{:}], 'k'), hold on
     axis equal off
-    colorbar
     title(sprintf('$t = %.2f$', t), 'Interpreter', 'latex')
 
     subplot(1, 2, 2)
-    plot(AA(:,1), AA(:,2) / A0, 'k-')
+    cla
+    plot(AA(:,1), AA(:,2) / A0, 'k')
     xlabel('$t$', 'Interpreter', 'latex')
     ylabel('$|\Omega| / |\Omega_0|$', 'Interpreter', 'latex')
     drawnow
@@ -137,7 +132,7 @@ for nt = 1 : Nt
   end
 
   Omega2     = discretize(xb2, yb2, D);
-  [U2, ~]    = growthFlow(Omega2, lambda, K);
+  [U2, ~]    = growth(Omega2, lambda, K);
   [k2u, k2v] = extractBoundaryVelocity(U2, Mb);
 
   xb3 = cell(Mb, 1);  yb3 = cell(Mb, 1);
@@ -147,7 +142,7 @@ for nt = 1 : Nt
   end
 
   Omega3     = discretize(xb3, yb3, D);
-  [U3, ~]    = growthFlow(Omega3, lambda, K);
+  [U3, ~]    = growth(Omega3, lambda, K);
   [k3u, k3v] = extractBoundaryVelocity(U3, Mb);
 
   xb4 = cell(Mb, 1);  yb4 = cell(Mb, 1);
@@ -157,7 +152,7 @@ for nt = 1 : Nt
   end
 
   Omega4     = discretize(xb4, yb4, D);
-  [U4, ~]    = growthFlow(Omega4, lambda, K);
+  [U4, ~]    = growth(Omega4, lambda, K);
   [k4u, k4v] = extractBoundaryVelocity(U4, Mb);
 
   for mb = 1:Mb
@@ -171,26 +166,6 @@ end
 
 Omega = discretize(xb, yb, D);
 A = surfacearea(Omega);
-
-% ── Plot ──────────────────────────────────────────────────────────────────────
-
-if doPlot
-  figure
-  plot(AA(:,1), AA(:,2) / A0)
-  xlabel('time, $t$', 'Interpreter', 'latex')
-  ylabel('surface area, $|\Omega| / |\Omega_0|$', 'Interpreter', 'latex')
-  title(sprintf('$\\lambda = %g$', lambda), 'Interpreter', 'latex')
-end
-
-% ── Save output ────────────────────────────────────────────────────────────
-
-if doSave
-  outdir = 'output';
-  if ~exist(outdir, 'dir')
-    mkdir(outdir)
-  end
-  save(fullfile(outdir, 'growthFlowMovingBoundary.mat'), 'Xb', 'Yb', 'AA', 'K', 'J', 'lambda', 'dt', 'A0')
-end
 
 % ── Local functions ──────────────────────────────────────────────────────────
 

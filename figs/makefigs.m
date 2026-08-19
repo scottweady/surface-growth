@@ -5,7 +5,7 @@ cd scripts
 
 fig2
 exportgraphics(fig, '../output/fig2.pdf', 'ContentType', 'vector')
-    
+
 fig3
 exportgraphics(fig, '../output/fig3.pdf', 'ContentType', 'vector')
 

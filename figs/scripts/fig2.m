@@ -1,9 +1,6 @@
 
 % Pressure and velocity profiles on a spherical cap for a range of radii R.
 
-addpath('../../utils')
-addpath('../../src')
-
 c_pressure = [0.1 0.1 0.6];
 c_velocity = [0.6 0.1 0.6];
 
@@ -20,29 +17,10 @@ cmap_pressure(1, :) = [];
 cmap_velocity = 1 - linearrgbmap(1 - c_velocity, length(Rplt)+1);
 cmap_velocity(1, :) = [];
 
-% ── Solve ────────────────────────────────────────────────────────────────────
+% ── Load ─────────────────────────────────────────────────────────────────────
+% Solved by scripts/sphereProfiles.m, run via data/makedata.m
 
-cache = '../../data/fig2.mat';
-
-if isfile(cache)
-  load(cache, 'hAll', 'pAll', 'uAll')
-else
-  H = pi / 2;
-
-  hAll = cell(length(Rplt), 1);
-  pAll = cell(length(Rplt), 1);
-  uAll = cell(length(Rplt), 1);
-
-  for k = 1:length(Rplt)
-    R = Rplt(k);
-    [~, p, h, u] = growthFlowSphere(H, lambda, R, N);
-    hAll{k} = h;
-    pAll{k} = p;
-    uAll{k} = u;
-  end
-
-  save(cache, 'hAll', 'pAll', 'uAll')
-end
+load('../../data/fig2.mat', 'hAll', 'pAll', 'uAll')
 
 % ── Figure ───────────────────────────────────────────────────────────────────
 

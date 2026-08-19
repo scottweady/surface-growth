@@ -1,5 +1,5 @@
-function [dOmegadt, u, v, p, x, y] = growthFlowHomogenized(lambda, K, J, Nr, Ntheta)
-% GROWTHFLOWHOMOGENIZED Solve the homogenized growth flow problem on a disk
+function [dOmegadt, u, v, p, x, y] = growthHomogenized(lambda, K, J, Nr, Ntheta)
+% GROWTHHOMOGENIZED Solve the homogenized growth flow problem on a disk
 %
 % Solves the nonlinear anisotropic growth flow problem
 %   -div(K grad p) - exp(-λp) = 0
@@ -89,7 +89,7 @@ function [dOmegadt, u, v, p, x, y] = growthFlowHomogenized(lambda, K, J, Nr, Nth
   end
 
   if err > tol
-    fprintf("growthFlow solver did not converge: err = %1.4e\n", err)
+    fprintf("growth solver did not converge: err = %1.4e\n", err)
   end
 
   % ── Velocity field and growth rate ───────────────────────────────────────

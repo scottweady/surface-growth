@@ -3,8 +3,8 @@
 % and anisotropic moving-boundary simulations, and (c) domain area growth
 % over time, normalized by the initial area.
 
-addpath('../../utils')
-addpath('../../src')
+% ── Load ─────────────────────────────────────────────────────────────────────
+% Solved by scripts/movingBoundaryRoughness.m, run via data/makedata.m
 
 Niso = load('../../data/fig6/isotropic.mat');
 Nani = load('../../data/fig6/anisotropic.mat');
