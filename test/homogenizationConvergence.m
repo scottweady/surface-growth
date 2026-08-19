@@ -52,7 +52,7 @@ end
 
 %% Plot eps convergence
 
-journal_figure([3.75 2.5], 2);
+fig = journalFig([3.75 2.5], 2);
 
 err = abs(dOmegadt - dOmegadt_hom);
 
@@ -65,8 +65,7 @@ ylim([0.1 * min(err) 10 * max(err)])
 xlabel('roughness wavelength, $\varepsilon$')
 ylabel('error, $|\dot A_\varepsilon - \dot\Omega_{\rm hom}|$')
 legend('Location', 'best')
-
-print('output/fig-homogenization-eps-convergence', '-dpdf')
+title('Direct-to-homogenized: $\varepsilon$ convergence')
 
 function [K, J] = calcK(h)
 

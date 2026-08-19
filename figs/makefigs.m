@@ -18,8 +18,6 @@ exportgraphics(fig, '../output/fig5.pdf', 'ContentType', 'vector')
 fig6
 exportgraphics(fig, '../output/fig6.pdf', 'ContentType', 'vector')
 
-close all
-
 cd ..
 
 warning('on', 'MATLAB:print:ContentTypeImageSuggested')

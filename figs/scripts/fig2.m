@@ -4,14 +4,12 @@
 addpath('../../utils')
 addpath('../../src')
 
-close all
-
 c_pressure = [0.1 0.1 0.6];
 c_velocity = [0.6 0.1 0.6];
 
 N = 100;
 
-fig = journal_figure([6.75 2.5], 2);
+fig = journalFig([6.75 2.5], 2);
 
 Rplt = 10 + [0, 2.^(1:5)];
 lambda = 1;

@@ -3,7 +3,15 @@ addpath('../utils')
 addpath('../src')
 addpath('../scripts')
 
-sphere_convergence
-roughness_convergence
-growthFlow_convergence
-homogenization_eps_convergence
+sphereConvergence
+print(figSpatial, 'output/fig-sphere-spatial-convergence', '-dpdf')
+print(figTemporal, 'output/fig-sphere-temporal-convergence', '-dpdf')
+
+roughnessConvergence
+print(fig, 'output/fig-roughness-convergence', '-dpdf')
+
+growthFlowConvergence
+print(fig, 'output/fig-anisotropic-temporal-convergence', '-dpdf')
+
+homogenizationConvergence
+print(fig, 'output/fig-homogenization-eps-convergence', '-dpdf')

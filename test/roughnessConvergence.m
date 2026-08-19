@@ -8,7 +8,7 @@ a = 1;
 
 %% Spatial convergence (roughness tensor cell problem)
 
-journal_figure([3.75 2.5], 2);
+fig = journalFig([3.75 2.5], 2);
 
 NN = 5:10:65;
 KK = [];
@@ -36,8 +36,7 @@ ylim([0.1 * min(err) 10 * max(err)])
 xlabel('resolution, $N$')
 ylabel('error, $|K_{11,N} - K_{11,N_{\max}}|$')
 legend('Location', 'best')
-
-print('output/fig-homogenization-K-convergence', '-dpdf')
+title('Roughness tensor: spatial convergence')
 
 function [K, J] = calcK(h)
 

@@ -3,8 +3,6 @@
 % for flat, 1D-wave, and 2D-wave surfaces from the homogenized growth flow
 % equations.
 
-close all
-
 addpath('../../src')
 addpath('../../utils')
 
@@ -73,7 +71,7 @@ gr_lim = [min(cellfun(@(g) min(g(:)), G)), 1];
 
 % ── Figure ────────────────────────────────────────────────────────────────────
 
-fig = journal_figure([6.75 2], 2);
+fig = journalFig([6.75 2], 2);
 
 ml = 0.08;  mr = 0.08;  mb = 0.18;  mt = 0.06;
 gap = 0.015;

@@ -5,9 +5,7 @@
 addpath('../../utils')
 addpath('../../src')
 
-close all
-
-fig = journal_figure([6.75 2.25], 2);
+fig = journalFig([6.75 2.25], 2);
 
 lspan = [0 0.01 0.1 1];
 Lspan = linspace(0, 1, 100);

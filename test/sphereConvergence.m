@@ -8,7 +8,7 @@ R = 1;
 
 %% Spatial convergence
 
-journal_figure([3.75 2.5], 2);
+figSpatial = journalFig([3.75 2.5], 2);
 UU = [];
 NN = 4 : 2 : 32;
 
@@ -30,12 +30,11 @@ ylim([0.1 * min(err) 10 * max(err)])
 xlabel('resolution, $N$')
 ylabel('error, $|U_N - U_{N/2}|$')
 legend('Location', 'best')
-
-print('output/fig-sphere-spatial-convergence', '-dpdf')
+title('Sphere: spatial convergence')
 
 %% Temporal convergence
 
-journal_figure([3.75 2.5], 2);
+figTemporal = journalFig([3.75 2.5], 2);
 HH = [];
 
 N = 100;
@@ -64,6 +63,5 @@ ylim([0.1 * min(err) 10 * max(err)])
 xlabel('time step size, $\Delta t$')
 ylabel('error, $|U_{\Delta t} - U_{\Delta t/2}|$')
 legend('Location', 'best')
-
-print('output/fig-sphere-temporal-convergence', '-dpdf')
+title('Sphere: temporal convergence')
 

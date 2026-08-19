@@ -1,6 +1,6 @@
 
-function fig = journal_figure(sz, sc, tex)
-% JOURNAL_FIGURE  Create a figure formatted for journal publication.
+function fig = journalFig(sz, sc, tex)
+% JOURNALFIG  Create a figure formatted for journal publication.
 
 % Set scale
 if nargin < 2

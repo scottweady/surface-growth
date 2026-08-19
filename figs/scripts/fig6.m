@@ -3,7 +3,6 @@
 % and anisotropic moving-boundary simulations, and (c) domain area growth
 % over time, normalized by the initial area.
 
-close all
 addpath('../../utils')
 addpath('../../src')
 
@@ -14,7 +13,7 @@ Nsnap = 5;
 
 % ── Figure ────────────────────────────────────────────────────────────────────
 
-fig = journal_figure([6.75 2.25], 2);
+fig = journalFig([6.75 2.25], 2);
 ax_a = subplot(1, 3, 1);
 ax_b = subplot(1, 3, 2);
 ax_c = subplot(1, 3, 3);
