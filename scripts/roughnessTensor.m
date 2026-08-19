@@ -41,9 +41,6 @@ for na = 1 : Na
   [K, J] = calcK(h1);
   dA1dt = darcyHomogenized(lambda, K, J);
 
-  display(K)
-  display(J)
-
   %%
 
   h2 = a * sin(2 * pi * x) .* sin(2 * pi * y);
@@ -54,25 +51,6 @@ for na = 1 : Na
   hom(na, :) = [a dA1dt / pi dA2dt / pi];
 
 end
-
-%%
-c_growth = [0.1 0.6 0.3];
-
-% Initialize figure
-close all
-fig = journal_figure([3.25 2.5], 2);
-plot(hom(:, 1), hom(:, 3), '--', 'Color', 'k', 'DisplayName', '$h(\xi'',\eta'') = 0$'), hold on
-plot(hom(:, 1), hom(:, 2), 'o-.', 'Color', c_growth, 'DisplayName', '$h(\xi'',\eta'') = a\sin(2 \pi \xi'')$'), hold on
-plot(hom(:, 1), hom(:, 3), 's:', 'Color', 1-c_growth, 'DisplayName', '$h(\xi'',\eta'') = a\sin(2 \pi \xi'') \sin(2 \pi \eta'')$')
-xlabel('roughness amplitude, $a$')
-ylabel('growth rate, $|\dot\Omega|/|\Omega|$')
-legend('Location', 'southwest', 'EdgeColor', 'none')
-ylim([0.86 0.96])
-
-h1 = 10 * sin(2 * pi * x);
-[K, J] = calcK(h1);
-[dA2dt, u, v, p, xi, eta] = darcyHomogenized(lambda, K, J);
-
 
 function [K, J] = calcK(h)
 

@@ -13,8 +13,11 @@ close all
 NN = 5:10:65;
 KK = [];
 
-for N = NN
-  fprintf('N = %d\n', N)
+for k = 1:length(NN)
+  N = NN(k);
+  clc
+  fprintf('Homogenization K-tensor convergence...\n')
+  fprintf('%s N = %d\n', progressBar(k / length(NN)), N)
   xi  = trigpts(N, [0 1]);
   eta = trigpts(N, [0 1]);
   [eta, xi] = meshgrid(eta, xi);
@@ -50,8 +53,11 @@ h = a * sin(2 * pi * xi);
 NN = 4:4:40;
 UU = [];
 
-for Nr = NN
-  fprintf('Nr = %d\n', Nr)
+for k = 1:length(NN)
+  Nr = NN(k);
+  clc
+  fprintf('Homogenization disk-solve convergence...\n')
+  fprintf('%s Nr = %d\n', progressBar(k / length(NN)), Nr)
   UU = [UU; darcyHomogenized(lambda, K, J, Nr, Nr - 1)];
 end
 

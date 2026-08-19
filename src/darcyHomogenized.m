@@ -12,6 +12,9 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
 
   [r, dr] = chebpts(Nr, [-1 1]);
   [theta, dtheta] = trigpts(Ntheta, [0 2 * pi]);
+
+  dA = (R * r(:)) .* dr(:) .* dtheta(:)';
+
   dr = dr';
   theta = theta';
 
@@ -73,18 +76,12 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
   u = reshape(u, Nr, Ntheta);
   v = reshape(v, Nr, Ntheta);
 
-  dOmegadt = J * R * sum(dtheta .* (u(end, :) .* nx + v(end, :) .* ny));
+  dOmegadt = J * sum(R * dtheta .* (u(end, :) .* nx + v(end, :) .* ny));
 
   if lambda == 0
     pexact = R^2 * (1 - r.^2) / (2 * (K(1, 1) + K(2, 2)));
     display("Error in p: " + max(abs(p(:) - pexact(:))))
   end
-
-%   x = x(Nr/2 + 1 : end, :);
-%   y = y(Nr/2 + 1 : end, :);
-%   u = u(Nr/2 + 1 : end, :);
-%   v = v(Nr/2 + 1 : end, :);
-%   p = p(Nr/2 + 1 : end, :);
 
 end
 

@@ -17,10 +17,13 @@ T    = 0.2;
 NNt  = 2.^(0 : 4);
 Afin = [];
 
-for Nsteps = NNt
+for k = 1:length(NNt)
+  Nsteps = NNt(k);
   dt = T / Nsteps;
   tf = T;
-  fprintf('dt = %g\n', dt)
+  clc
+  fprintf('Moving boundary solve temporal convergence...\n')
+  fprintf('%s dt = %g\n', progressBar(k / length(NNt)), dt)
   darcyMovingBoundary
   Afin = [Afin; A];
 end

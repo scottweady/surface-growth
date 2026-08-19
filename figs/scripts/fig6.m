@@ -39,12 +39,12 @@ addTimeColorbar(ax_b, cmap, tRangeB)
 
 axes(ax_c)
 plot(Niso.AA(:,1), Niso.AA(:,2) / Niso.A0, 'Color', c_growth([1 3 2]), ...
-    'DisplayName', 'isotropic'), hold on
+    'DisplayName', '$h(\xi'',\eta'') = a\sin(2\pi \xi'')\sin(2\pi\eta'')$'), hold on
 plot(Nani.AA(:,1), Nani.AA(:,2) / Nani.A0, 'Color', c_growth, ...
-    'DisplayName', 'anisotropic')
+    'DisplayName', '$h(\xi'',\eta'') = a\sin(2\pi \xi'')$')
 xlabel('time, $t$', 'Interpreter', 'latex')
 ylabel('$|\Omega| / |\Omega_0|$', 'Interpreter', 'latex')
-legend('Location', 'southeast', 'EdgeColor', 'none')
+legend('Location', 'southeast', 'EdgeColor', 'none', 'Color', 'none')
 ylim([0 10])
 
 ax_a.Units = 'inches';
@@ -83,10 +83,6 @@ tb_b.Position(1) = ax_b.Position(1)+0.5;
 tb_b.Position(2) = tb_a.Position(2);
 tb_c.Position(1) = ax_c.Position(1);
 tb_c.Position(2) = tb_a.Position(2);
-
-exportgraphics(fig, '../output/fig6.pdf', 'ContentType', 'vector')
-
-% ── Local function ────────────────────────────────────────────────────────────
 
 function [R, tRange] = plotSnapshots(ax, data, Nsnap, cmap)
 

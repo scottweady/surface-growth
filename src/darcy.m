@@ -25,16 +25,22 @@ function [U, p] = darcy(Omega, lambda, K)
 
   if nargin < 3
     K = eye(2);
+    pdo = struct('lap', -1);
+    divKgradp = @(p) lap(p);
+  else
+    pdo = struct('dxx', -K(1,1), 'dxy', -K(1,2), 'dyx', -K(2,1), 'dyy', -K(2,2));
+    divKgradp = @(p) K(1,1) * diffx(p, 2) + (K(1,2) + K(2,1)) * diffx(diffy(p)) + K(2,2) * diffy(p, 2);
   end
 
   % Solve initial linear problem for pressure
   % -div(K grad p) = 1 with appropriate boundary conditions
-  pdo = struct('dxx', -K(1,1), 'dxy', -K(1,2), 'dyx', -K(2,1), 'dyy', -K(2,2));
+  
+
   L = surfaceop(Omega, pdo, 1);
   p = L.solve(0);
 
   % Set convergence parameters for Newton iteration
-  tol = 1e-8;        % Convergence tolerance
+  tol = 1e-6;        % Convergence tolerance
   err = 10 * tol;    % Initialize error above tolerance
   maxIter = 100;     % Maximum number of iterations
   iter = 0;          % Iteration counter
@@ -45,9 +51,7 @@ function [U, p] = darcy(Omega, lambda, K)
     % where q is the Newton correction
     pdo.b = lambda * exp(-lambda * p);
     L = surfaceop(Omega, pdo);
-    divKgradp = K(1,1) * diffx(p, 2) + (K(1,2) + K(2,1)) * diffx(diffy(p)) ...
-              + K(2,2) * diffy(p, 2);
-    L.rhs = -divKgradp - exp(-lambda * p);  % Residual of nonlinear equation
+    L.rhs = -divKgradp(p) - exp(-lambda * p);  % Residual of nonlinear equation
 
     % Solve for Newton correction
     q = L.solve(0);

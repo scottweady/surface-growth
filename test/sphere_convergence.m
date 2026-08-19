@@ -12,8 +12,11 @@ close all
 UU = [];
 NN = 4 : 2 : 32;
 
-for N = NN
-  fprintf('N = %d\n', N)
+for k = 1:length(NN)
+  N = NN(k);
+  clc
+  fprintf('Spatial convergence for sphere...\n')
+  fprintf('%s N = %d\n', progressBar(k / length(NN)), N)
   UU = [UU; darcySphere(pi/2, lambda, R, N)];
 end
 
@@ -38,9 +41,12 @@ N = 100;
 NNt = 2.^(1 : 8);
 F = @(Theta) darcySphere(Theta, lambda, R, N);
 
-for Nt = NNt
+for k = 1:length(NNt)
+  Nt = NNt(k);
   dt = 1 / Nt;
-  fprintf('dt = %g\n', dt)
+  clc
+  fprintf('Temporal convergence for sphere...\n')
+  fprintf('%s dt = %g\n', progressBar(k / length(NNt)), dt)
   HH = [HH; rk4(pi/4, F, dt, Nt)];
 end
 

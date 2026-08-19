@@ -16,7 +16,7 @@ a      = 1;   % roughness amplitude for snapshots
 
 % ── (a) Growth rate vs amplitude ─────────────────────────────────────────────
 
-cache = '../../data/hom.mat';
+cache = '../../data/fig5.mat';
 
 if isfile(cache)
   load(cache, 'hom')
@@ -70,7 +70,6 @@ for k = 1:3
   U{k} = [u,  u(:,1)];
   V{k} = [v,  v(:,1)];
   G{k} = [exp(-lambda*p), exp(-lambda*p(:,1))];
-  K
 end
 
 gr_lim = [min(cellfun(@(g) min(g(:)), G)), 1];
@@ -118,8 +117,12 @@ for k = 1:3
   xg = linspace(-R, R, ng);
   yg = linspace(-R, R, ng);
   [Xg, Yg] = meshgrid(xg, yg);
+
+  warning('off', 'MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId');
   Fu = scatteredInterpolant(X{k}(:), Y{k}(:), U{k}(:));
   Fv = scatteredInterpolant(X{k}(:), Y{k}(:), V{k}(:));
+  warning('on', 'MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId');
+  
   Ug = Fu(Xg, Yg);
   Vg = Fv(Xg, Yg);
   Ug(Xg.^2 + Yg.^2 > R^2) = NaN;
@@ -196,10 +199,6 @@ for k = 1:3
       'HorizontalAlignment', 'center', 'VerticalAlignment', 'top', ...
       'Interpreter', 'latex', 'FontSize', ax.FontSize, 'Clipping', 'off')
 end
-
-exportgraphics(fig, '../output/fig5.pdf', 'ContentType', 'vector')
-
-% ── Local function ────────────────────────────────────────────────────────────
 
 function [K, J] = calcK(h)
 
