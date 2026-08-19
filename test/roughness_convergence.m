@@ -8,7 +8,7 @@ a = 1;
 
 %% Spatial convergence (roughness tensor cell problem)
 
-close all
+journal_figure([3.75 2.5], 2);
 
 NN = 5:10:65;
 KK = [];
@@ -28,50 +28,16 @@ end
 
 err = abs(KK(1 : end-1) - KK(end));
 
-semilogy(NN(1 : end-1), err, 'ko-')
+semilogy(NN(1 : end-1), err, 'ko-', 'DisplayName', 'error')
 
 xlim([0 max(NN)])
 ylim([0.1 * min(err) 10 * max(err)])
 
 xlabel('resolution, $N$')
 ylabel('error, $|K_{11,N} - K_{11,N_{\max}}|$')
+legend('Location', 'best')
 
 print('output/fig-homogenization-K-convergence', '-dpdf')
-
-%% Spatial convergence (homogenized disk solve)
-
-close all
-
-% Roughness tensor for a representative (anisotropic wave) surface
-N  = 31;
-xi  = trigpts(N, [0 1]);
-eta = trigpts(N, [0 1]);
-[eta, xi] = meshgrid(eta, xi);
-h = a * sin(2 * pi * xi);
-[K, J] = calcK(h);
-
-NN = 4:4:40;
-UU = [];
-
-for k = 1:length(NN)
-  Nr = NN(k);
-  clc
-  fprintf('Homogenization disk-solve convergence...\n')
-  fprintf('%s Nr = %d\n', progressBar(k / length(NN)), Nr)
-  UU = [UU; darcyHomogenized(lambda, K, J, Nr, Nr - 1)];
-end
-
-err = abs(UU(1 : end-1) - UU(end));
-
-semilogy(NN(1 : end-1), err, 'ko-')
-
-xlim([0 max(NN)])
-ylim([0.1 * min(err) 10 * max(err)])
-
-xlabel('resolution, $N$')
-ylabel('error, $|\dot\Omega_N - \dot\Omega_{N_{\max}}|$')
-
-print('output/fig-homogenization-spatial-convergence', '-dpdf')
 
 function [K, J] = calcK(h)
 

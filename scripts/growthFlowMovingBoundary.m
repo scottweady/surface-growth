@@ -1,13 +1,27 @@
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Simulates a growing domain on a flat (possibly anisotropic/homogenized)
+% surface. Starting from a circular boundary, the boundary is advanced with
+% RK4 using the velocity field from growthFlow, remeshed to equal arclength
+% at every step, and the domain's surface area is tracked over time. Runs
+% until the area reaches 10x its initial value.
+%
+% Designed to be called as a script with a shared workspace (e.g. by a
+% convergence study), so that lambda, K, dt, tf, doPlot, doSave can be
+% pre-set by the caller before it runs.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 addpath('../src')
 
-% Parameters (may be pre-set in the workspace by a caller, e.g. a convergence
-% study -- otherwise default to the values below)
+% ── Parameters ───────────────────────────────────────────────────────────────
+% Fall back to defaults for anything not already set in the workspace.
+
 if ~exist('lambda', 'var')
   lambda = 1;
 end
 
-% Stiffness (permeability) tensor -- set manually
 if ~exist('K', 'var')
     K = [1.0 0.0;
          0.0 1.0];
@@ -15,8 +29,6 @@ end
 
 J = 1.0 / K(1, 1);
 
-% Set false to suppress plotting/saving, e.g. when called repeatedly from a
-% convergence study
 if ~exist('doPlot', 'var')
   doPlot = true;
 end
@@ -35,15 +47,15 @@ f          = @(u, v) [u v h(u, v)];
 discretize = @(xb, yb, D) surfacemesh.image(f, surfacemesh.ellipticgrid(xb, yb, D));
 
 % ── Mesh ─────────────────────────────────────────────────────────────────────
+% Parametric disk with an initial boundary of unit physical area
+% (R0 = 1/sqrt(J), matching the convention in growthFlowHomogenized.m, since
+% the homogenized cell's true area element is J times the flat domain's).
 
 Nref = 1;
 Mb   = 4 * Nref;
 P    = 12;
 D    = surfacemesh.disk(P, Nref);
 
-% Initial boundary: circle of unit physical area, R0 = 1/sqrt(J)
-% (matches the R = 1/sqrt(J) convention in darcyHomogenized.m, since the
-% homogenized cell's true area element is J times the flat domain's)
 R0 = 1 / sqrt(J);
 xb = cell(Mb, 1);
 yb = cell(Mb, 1);
@@ -66,8 +78,10 @@ Nt = floor(tf / dt);
 Omega = discretize(xb, yb, D);
 A0    = surfacearea(Omega);
 
-% ── Main loop (RK4 every step, remesh every stage) ────────────────────────────
-% Stops once the domain area reaches 10x its initial value.
+% ── Main loop ────────────────────────────────────────────────────────────────
+% RK4 in time; the boundary curve is remeshed to equal arclength after each
+% full step, and the growth flow is re-solved at each RK4 stage since the
+% domain shape changes at every stage.
 
 Xb = {};
 Yb = {};
@@ -79,10 +93,9 @@ for nt = 1 : Nt
 
   Omega      = discretize(xb, yb, D);
   A          = surfacearea(Omega);
-  [U1, p]    = darcy(Omega, lambda, K);
+  [U1, p]    = growthFlow(Omega, lambda, K);
   [ub, vb]   = extractBoundaryVelocity(U1, Mb);
 
-  % Store boundary and area
   Xb{nt} = xb;
   Yb{nt} = yb;
   AA     = [AA; t, A];
@@ -92,12 +105,8 @@ for nt = 1 : Nt
     fprintf('t = %.3f / %.3f\n', t, tf)
     fprintf('|Omega| / |Omega0| = %.2f\n', A / A0)
 
-    % Plot
     clf
     subplot(1, 2, 1)
-%     for m = 1:length(Omega)
-%       contourf(Omega.x{m}, Omega.y{m}, exp(-lambda * p.vals{m}), 'EdgeColor', 'none'), hold on
-%     end
     xbcat = cellfun(@(x) x, xb, 'UniformOutput', false);
     ybcat = cellfun(@(y) y, yb, 'UniformOutput', false);
     plot([xbcat{:}], [ybcat{:}], 'k-')
@@ -112,12 +121,11 @@ for nt = 1 : Nt
     drawnow
   end
 
-  % Stop once the domain reaches 10x its initial area
   if A >= 10 * A0
     break
   end
 
-  % RK4 update (remesh the boundary curve before evaluating the velocity at
+  % RK4 stages (remesh the boundary curve before evaluating the velocity at
   % each intermediate stage)
   k1u = ub;
   k1v = vb;
@@ -129,7 +137,7 @@ for nt = 1 : Nt
   end
 
   Omega2     = discretize(xb2, yb2, D);
-  [U2, ~]    = darcy(Omega2, lambda, K);
+  [U2, ~]    = growthFlow(Omega2, lambda, K);
   [k2u, k2v] = extractBoundaryVelocity(U2, Mb);
 
   xb3 = cell(Mb, 1);  yb3 = cell(Mb, 1);
@@ -139,7 +147,7 @@ for nt = 1 : Nt
   end
 
   Omega3     = discretize(xb3, yb3, D);
-  [U3, ~]    = darcy(Omega3, lambda, K);
+  [U3, ~]    = growthFlow(Omega3, lambda, K);
   [k3u, k3v] = extractBoundaryVelocity(U3, Mb);
 
   xb4 = cell(Mb, 1);  yb4 = cell(Mb, 1);
@@ -149,7 +157,7 @@ for nt = 1 : Nt
   end
 
   Omega4     = discretize(xb4, yb4, D);
-  [U4, ~]    = darcy(Omega4, lambda, K);
+  [U4, ~]    = growthFlow(Omega4, lambda, K);
   [k4u, k4v] = extractBoundaryVelocity(U4, Mb);
 
   for mb = 1:Mb
@@ -157,7 +165,6 @@ for nt = 1 : Nt
     yb{mb} = yb{mb} + (dt/6) * (k1v{mb} + 2*k2v{mb} + 2*k3v{mb} + k4v{mb});
   end
 
-  % Remesh (equal arclength) every step
   [xb, yb] = equalArclength(xb, yb, h);
 
 end
@@ -182,11 +189,13 @@ if doSave
   if ~exist(outdir, 'dir')
     mkdir(outdir)
   end
-  save(fullfile(outdir, 'darcyMovingBoundary.mat'), 'Xb', 'Yb', 'AA', 'K', 'J', 'lambda', 'dt', 'A0')
+  save(fullfile(outdir, 'growthFlowMovingBoundary.mat'), 'Xb', 'Yb', 'AA', 'K', 'J', 'lambda', 'dt', 'A0')
 end
 
-% ── Local function ────────────────────────────────────────────────────────────
+% ── Local functions ──────────────────────────────────────────────────────────
 
+% Extracts the boundary velocity of each segment from the surfacefunv U,
+% patching segment endpoints together so the boundary stays closed.
 function [ub, vb] = extractBoundaryVelocity(U, Mb)
 
   ub = cell(Mb, 1);
@@ -204,11 +213,13 @@ function [ub, vb] = extractBoundaryVelocity(U, Mb)
 
 end
 
+% Reparametrizes the boundary curve(s) to equal arclength spacing by solving
+% for the speed profile phi that maps uniform Chebyshev points to uniform
+% arclength, refining the number of subdivisions until the endpoint matches.
 function [xb, yb] = equalArclength(xb, yb, h, varargin)
 
   if isempty(varargin)
 
-    % Loop over segments
     for k = 1 : length(xb)
       [xb, yb] = equalArclength(xb, yb, h, k);
     end
@@ -217,70 +228,52 @@ function [xb, yb] = equalArclength(xb, yb, h, varargin)
 
     k = varargin{1};
 
-    % Get coordinates
     x = xb{k};
     y = yb{k};
     z = h(x, y);
 
-    % Number of grid points
     N = length(x);
 
-    % Create Chebyshev grid
     [t, w] = chebpts(N, [0 1]);
     w = w(:);
     Dmat = diffmat(N, 1, [0 1]);
 
-    % Arclength spacing
     dt = t(2 : end) - t(1 : end - 1);
 
-    % Save endpoint to check error
     xf = x(end);
     yf = y(end);
     zf = z(end);
 
-    % Compute arclength
     ds = sqrt( (Dmat * x).^2 + (Dmat * y).^2 + (Dmat * z).^2 );
     L = sum(ds .* w);
 
-    % Right hand side
     fphi = @(phi) equalArclengthF(phi, L, ds, t);
 
-    % Number of subdivisions
     M = 1;
-
-    % Maximum number of subdivisions
     Mmax = 32;
-
-    % Endpoint error tolerance
     tol = 1e-8;
 
     err = 10 * tol;
 
     while err > tol && M <= Mmax
 
-      % Initialize speed
       phi = zeros(N, 1);
 
-      % Compute speed
       for n = 1 : N - 1
         phi(n + 1) = equalArclengthRK4(phi(n), fphi, dt(n) / M, dt(n));
       end
 
-      % Update solution
       B = barymat(phi, t);
       xp = B * x;
       yp = B * y;
       zp = B * z;
 
-      % Check error
       err = sqrt( (xp(end) - xf)^2 + (yp(end) - yf)^2 + (zp(end) - zf)^2);
 
-      % Update subdivisions
       M = 2 * M;
 
     end
 
-    % Reassign value
     B = barymat(phi, t);
     xb{k} = B * x;
     yb{k} = B * y;

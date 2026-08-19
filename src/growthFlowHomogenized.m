@@ -1,5 +1,24 @@
-
-function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
+function [dOmegadt, u, v, p, x, y] = growthFlowHomogenized(lambda, K, J, Nr, Ntheta)
+% GROWTHFLOWHOMOGENIZED Solve the homogenized growth flow problem on a disk
+%
+% Solves the nonlinear anisotropic growth flow problem
+%   -div(K grad p) - exp(-λp) = 0
+% on a disk of physical area element J (radius R = 1/sqrt(J)) using a
+% polar Chebyshev/Fourier spectral discretization and Newton's method, then
+% returns the resulting growth rate of the domain.
+%
+% INPUTS:
+%   lambda - Non-dimensional parameter controlling the exponential nonlinearity
+%   K      - 2x2 homogenized permeability tensor
+%   J      - Homogenized area element (sets the disk radius R = 1/sqrt(J))
+%   Nr     - Number of radial (Chebyshev) points (optional, default 32)
+%   Ntheta - Number of angular (Fourier) points (optional, default 31)
+%
+% OUTPUTS:
+%   dOmegadt - Rate of change of domain area
+%   u, v     - Cartesian velocity components on the (r, theta) grid
+%   p        - Pressure field on the (r, theta) grid
+%   x, y     - Cartesian coordinates of the boundary (r = 1)
 
   if nargin < 4
     Nr = 32;
@@ -9,6 +28,8 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
   end
 
   R = 1 / sqrt(J);
+
+  % ── Grid and differential operators ──────────────────────────────────────
 
   [r, dr] = chebpts(Nr, [-1 1]);
   [theta, dtheta] = trigpts(Ntheta, [0 2 * pi]);
@@ -37,12 +58,14 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
 
   L = -(Dx * (K(1, 1) * Dx + K(1, 2) * Dy) + Dy * (K(2, 1) * Dx + K(2, 2) * Dy));
 
-  % Dirichlet boundary conditions at r = 1, -1
+  % Dirichlet boundary conditions at r = 1, -1 (the two "poles" of the polar grid)
   L(1 : Nr : end, :) = 0;
   L(1 : Nr : end, 1 : Nr : end) = eye(Ntheta);
 
   L(Nr : Nr : end, :) = 0;
   L(Nr : Nr : end, Nr : Nr : end) = eye(Ntheta);
+
+  % ── Newton iteration ─────────────────────────────────────────────────────
 
   g = ones(Nr * Ntheta, 1);
   ib = [1 : Nr : Nr * Ntheta, Nr : Nr : Nr * Ntheta];
@@ -66,8 +89,10 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
   end
 
   if err > tol
-    fprintf("Darcy solver did not converge: err = %1.4e\n", err)
+    fprintf("growthFlow solver did not converge: err = %1.4e\n", err)
   end
+
+  % ── Velocity field and growth rate ───────────────────────────────────────
 
   p = reshape(p, Nr, Ntheta);
 
@@ -84,4 +109,3 @@ function [dOmegadt, u, v, p, x, y] = darcyHomogenized(lambda, K, J, Nr, Ntheta)
   end
 
 end
-

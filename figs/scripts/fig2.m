@@ -1,4 +1,6 @@
 
+% Pressure and velocity profiles on a spherical cap for a range of radii R.
+
 addpath('../../utils')
 addpath('../../src')
 
@@ -7,7 +9,6 @@ close all
 c_pressure = [0.1 0.1 0.6];
 c_velocity = [0.6 0.1 0.6];
 
-% Resolution
 N = 100;
 
 fig = journal_figure([6.75 2.5], 2);
@@ -20,6 +21,8 @@ cmap_pressure(1, :) = [];
 
 cmap_velocity = 1 - linearrgbmap(1 - c_velocity, length(Rplt)+1);
 cmap_velocity(1, :) = [];
+
+% ── Solve ────────────────────────────────────────────────────────────────────
 
 cache = '../../data/fig2.mat';
 
@@ -34,7 +37,7 @@ else
 
   for k = 1:length(Rplt)
     R = Rplt(k);
-    [~, p, h, u] = darcySphere(H, lambda, R, N);
+    [~, p, h, u] = growthFlowSphere(H, lambda, R, N);
     hAll{k} = h;
     pAll{k} = p;
     uAll{k} = u;
@@ -42,6 +45,8 @@ else
 
   save(cache, 'hAll', 'pAll', 'uAll')
 end
+
+% ── Figure ───────────────────────────────────────────────────────────────────
 
 nc = 1;
 for k = 1:length(Rplt)

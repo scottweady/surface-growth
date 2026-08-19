@@ -1,4 +1,7 @@
 
+% Growth rate vs. polar angle H on a sphere for a range of sensitivities
+% lambda, and the angle of maximal growth H* as a function of lambda.
+
 addpath('../../utils')
 addpath('../../src')
 
@@ -10,6 +13,8 @@ lspan = [0 0.01 0.1 1];
 Lspan = linspace(0, 1, 100);
 cmap = cmocean('algae', length(lspan) + 1);
 cmap = cmap(2 : end, :);
+
+% ── Solve ────────────────────────────────────────────────────────────────────
 
 cache = '../../data/fig4.mat';
 
@@ -29,10 +34,9 @@ else
   for k = 1:length(lspan)
     lambda = lspan(k);
 
-    F = @(H) darcySphere(H, lambda, R, N);
+    F = @(H) growthFlowSphere(H, lambda, R, N);
     Asave = [];
 
-    % Main loop
     for H = linspace(H0, Hf, 100)
       dAdt = 2 * pi * R^2 * sin(H) * F(H);
       Asave = [Asave; H dAdt];
@@ -48,7 +52,7 @@ else
     t = 0;
 
     H = H0;
-    F = @(H) darcySphere(H, lambda, R, N);
+    F = @(H) growthFlowSphere(H, lambda, R, N);
     dAdt = @(H) -2 * pi * sin(H) * F(H);
 
     hmax = fminsearch(dAdt, hmax);
@@ -59,6 +63,8 @@ else
 
   save(cache, 'AsaveAll', 'Amax')
 end
+
+% ── Figure ───────────────────────────────────────────────────────────────────
 
 sp1 = subplot(1, 2, 1);
 for k = 1:length(lspan)

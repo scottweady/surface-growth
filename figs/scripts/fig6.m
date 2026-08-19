@@ -1,11 +1,7 @@
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 % Plots (a)-(b) boundary snapshots (equally spaced in time) for the isotropic
 % and anisotropic moving-boundary simulations, and (c) domain area growth
 % over time, normalized by the initial area.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 close all
 addpath('../../utils')

@@ -1,4 +1,7 @@
 
+% Growth trajectories on spherical caps for a range of radii R, compared
+% against the flat (R -> infinity) limit.
+
 addpath('../../utils')
 addpath('../../src')
 
@@ -6,25 +9,22 @@ close all
 
 c_growth = [0.1 0.6 0.3];
 
-% Resolution
 N = 100;
 
 fig = journal_figure([6.75 2.5], 2);
 
-% Range of sphere radii
 Rplt = 10 + [0, 2.^(1:5)];
 Rspan = Rplt;
 
-% Colormap
 cmap = 1 - linearrgbmap(1 - c_growth, length(Rplt) + 1);
 cmap = cmap(2 : end, :);
 
-% Sensitivity
 lambda = 1;
 
-% Initial/final area (fixed constants, needed for plotting even on cache hit)
 A0 = 4 * pi;
 Af = 4 * pi * 10^2;
+
+% ── Solve ────────────────────────────────────────────────────────────────────
 
 cache = '../../data/fig3.mat';
 
@@ -39,41 +39,29 @@ else
 
     clc, fprintf("%f of %f\n", R, Rspan(end))
 
-    % Time step
     dt = 0.1;
-
-    % Final time
     tf = 100;
-
-    % Time
     t = 0;
 
-    % Initial angle
     H0 = acos(1 - A0 / (2 * pi * R^2));
     H = H0;
 
-    % Final location
     Hf = acos(1 - Af / (2 * pi * R^2));
 
-    % Area
     A = 2 * pi * R^2 * (1 - cos(H0));
     AA = [0, A];
 
-    % RHS function
-    F = @(Theta) darcySphere(Theta, lambda, R, N);
+    F = @(Theta) growthFlowSphere(Theta, lambda, R, N);
 
     Hsave = [0, H];
 
-    % Main loop
     while t < tf && H < Hf
 
-      % Update interface location
       H = rk4(H, F, dt, 1);
       t = t + dt;
 
       Hsave = [Hsave; t, H];
 
-      % Area
       A = 2 * pi * R^2 * (1 - cos(H));
       AA = [AA; t, A];
 
@@ -89,14 +77,13 @@ else
       t = t - 0.01*dt;
     end
 
-    % Get final time
     ts = [ts; R, t];
 
     AAall{k} = AA;
 
   end
 
-  % Flat interface
+  % Flat interface (R -> infinity limit, solved in closed form)
   t = 0;
   R = sqrt(A0 / pi);
   A = pi * R^2;
@@ -111,7 +98,6 @@ else
     AAinf = [AAinf; t, A];
   end
 
-  % Reverse at high res to find final time
   while A > Af
     R = rk4(R, F, -0.01*dt, 1);
     A = pi * R^2;
@@ -121,6 +107,8 @@ else
 
   save(cache, 'Hplt', 'ts', 'AAall', 'AAinf')
 end
+
+% ── Figure ───────────────────────────────────────────────────────────────────
 
 sp2 = subplot(1, 2, 2);
 for k = 1:length(Rplt)
@@ -154,12 +142,10 @@ for n = 1 : length(nspan)
   hm1 = h;
 end
 
-% Colormap
 colormap(cmap)
 hb = colorbar;
 clim([0 1])
 
-% Axis format
 axis equal tight off
 box on
 

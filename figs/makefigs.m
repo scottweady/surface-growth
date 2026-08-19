@@ -1,6 +1,5 @@
 
-addpath('../utils')
-addpath('../src')
+warning('off', 'MATLAB:print:ContentTypeImageSuggested')
 
 cd scripts
 
@@ -22,3 +21,5 @@ exportgraphics(fig, '../output/fig6.pdf', 'ContentType', 'vector')
 close all
 
 cd ..
+
+warning('on', 'MATLAB:print:ContentTypeImageSuggested')

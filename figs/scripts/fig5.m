@@ -1,10 +1,7 @@
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
 % Plots (a) growth rate vs roughness amplitude and (b)-(d) flow snapshots
-% for flat, 1D-wave, and 2D-wave surfaces from the homogenized Darcy equations.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% for flat, 1D-wave, and 2D-wave surfaces from the homogenized growth flow
+% equations.
 
 close all
 
@@ -35,11 +32,11 @@ else
 
     h1 = ai * sin(2*pi*x);
     [K1, J1] = calcK(h1);
-    dA1dt = darcyHomogenized(lambda, K1, J1);
+    dA1dt = growthFlowHomogenized(lambda, K1, J1);
 
     h2 = ai * sin(2*pi*x) .* sin(2*pi*y);
     [K2, J2] = calcK(h2);
-    dA2dt = darcyHomogenized(lambda, K2, J2);
+    dA2dt = growthFlowHomogenized(lambda, K2, J2);
 
     hom(na, :) = [ai, dA1dt/pi, dA2dt/pi];
   end
@@ -64,7 +61,7 @@ G = cell(3,1);
 
 for k = 1:3
   [K, J] = calcK(h_list{k});
-  [~, u, v, p, xc, yc] = darcyHomogenized(lambda, K, J);
+  [~, u, v, p, xc, yc] = growthFlowHomogenized(lambda, K, J);
   X{k} = [xc, xc(:,1)];
   Y{k} = [yc, yc(:,1)];
   U{k} = [u,  u(:,1)];
@@ -78,7 +75,6 @@ gr_lim = [min(cellfun(@(g) min(g(:)), G)), 1];
 
 fig = journal_figure([6.75 2], 2);
 
-% Manual layout (normalized figure coordinates)
 ml = 0.08;  mr = 0.08;  mb = 0.18;  mt = 0.06;
 gap = 0.015;
 h_ax = 1 - mb - mt;
@@ -122,7 +118,7 @@ for k = 1:3
   Fu = scatteredInterpolant(X{k}(:), Y{k}(:), U{k}(:));
   Fv = scatteredInterpolant(X{k}(:), Y{k}(:), V{k}(:));
   warning('on', 'MATLAB:scatteredInterpolant:DupPtsAvValuesWarnId');
-  
+
   Ug = Fu(Xg, Yg);
   Vg = Fv(Xg, Yg);
   Ug(Xg.^2 + Yg.^2 > R^2) = NaN;
