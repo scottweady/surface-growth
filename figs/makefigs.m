@@ -1,22 +1,12 @@
-
 warning('off', 'MATLAB:print:ContentTypeImageSuggested')
 
 cd scripts
 
-fig2
-exportgraphics(fig, '../output/fig2.pdf', 'ContentType', 'vector')
-
-fig3
-exportgraphics(fig, '../output/fig3.pdf', 'ContentType', 'vector')
-
-fig4
-exportgraphics(fig, '../output/fig4.pdf', 'ContentType', 'vector')
-
-fig5
-exportgraphics(fig, '../output/fig5.pdf', 'ContentType', 'vector')
-
-fig6
-exportgraphics(fig, '../output/fig6.pdf', 'ContentType', 'vector')
+for name = {'fig2', 'fig3', 'fig4', 'fig5', 'fig6'}
+  run(name{1})
+  exportgraphics(fig, fullfile('..', 'output', [name{1} '.pdf']), 'ContentType', 'vector')
+  close
+end
 
 cd ..
 

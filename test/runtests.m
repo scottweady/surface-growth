@@ -1,4 +1,5 @@
 
+clear 
 addpath('../scripts')
 
 sphereConvergence

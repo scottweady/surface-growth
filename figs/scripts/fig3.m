@@ -45,13 +45,13 @@ cmap = cmap(2:end,:);
 
 hm1 = 0;
 for n = 1 : length(nspan)
-  xi = linspace(0, 2 * pi, 32);
+  xi = linspace(0, 2 * pi, 256);
   h = Hplt(nspan(n), 2);
   eta = linspace(hm1, h, 32);
   [eta, xi] = meshgrid(eta, xi);
   surf(10 * cos(xi) .* sin(eta), 10 * sin(xi) .* sin(eta), 10 * cos(eta), 'FaceColor', cmap(n, :), 'EdgeColor', 'none'), hold on
 
-  xi = linspace(0, 2 * pi, 32);
+  xi = linspace(0, 2 * pi, 256);
   h = Hplt(nspan(n), 2);
   a = 10;
   plot3(a * cos(xi) .* sin(h), a * sin(xi) .* sin(h), a * cos(h) + 0 * xi, 'Color', cmap(n, :).^1.5), hold on
@@ -98,3 +98,39 @@ tbb.Position(2) = sum(sp2.Position([2 4])) - tbb.Position(4);
 
 tba.Position(2) = tbb.Position(2);
 tba.Position(1) = 0.6;
+
+% ── Rasterize panel (a) ──────────────────────────────────────────────────────
+% A vector surf is exported as thousands of separate polygons, which PDF
+% viewers anti-alias individually, leaving hairline seams between faces.
+% Render the sphere to a bitmap and place it back in the (otherwise vector)
+% figure.
+
+dpi = 600;
+
+tmp = figure('Visible', 'off', 'Units', 'inches', 'Position', fig.Position, 'Color', 'w');
+copyobj(sp1, tmp);
+img = print(tmp, '-RGBImage', sprintf('-r%d', dpi));
+close(tmp)
+
+% Crop to sp1's footprint (clipped to the figure)
+W = fig.Position(3);
+H = fig.Position(4);
+s = size(img, 2) / W; % pixels per inch
+x0 = max(sp1.Position(1), 0);
+y0 = max(sp1.Position(2), 0);
+x1 = min(sum(sp1.Position([1 3])), W);
+y1 = min(sum(sp1.Position([2 4])), H);
+cols = max(1, round(x0 * s) + 1) : min(size(img, 2), round(x1 * s));
+rows = max(1, round((H - y1) * s) + 1) : min(size(img, 1), round((H - y0) * s));
+
+% Trim white margins so exportgraphics can crop tightly
+mask = any(img(rows, cols, :) < 255, 3);
+cols = cols(find(any(mask, 1), 1, 'first') : find(any(mask, 1), 1, 'last'));
+rows = rows(find(any(mask, 2), 1, 'first') : find(any(mask, 2), 1, 'last'));
+
+delete(sp1.Children)
+ax_img = axes(fig, 'Units', 'inches', ...
+  'Position', [(cols(1) - 1) / s, H - rows(end) / s, numel(cols) / s, numel(rows) / s]);
+image(ax_img, img(rows, cols, :))
+axis(ax_img, 'off')
+uistack(ax_img, 'bottom')
