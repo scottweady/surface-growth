@@ -4,14 +4,14 @@
 % plane, Eqs. (30)-(31), to non-axisymmetric perturbations of the interface.
 %
 % Linear theory (Appendix A): perturbing the boundary of a disk of radius R
-% to r = R + delta * cos(k*theta), the amplitude evolves as
-% d(delta)/dt = sigma_k delta with
-%   sigma_k = -16 c^2 (k^2 - 1) / (1 + 4 c (k - 1)),   c = c(lambda R^2),
-% and the base radius as dR/dt = 4 c R, so the shape (relative amplitude
-% delta/R) evolves at the rate sigma_k - 4c.
+% to r = R (1 + eps cos(m theta)), the relative amplitude evolves as
+% d(eps)/dt = sigma_m eps with
+%   sigma_m = -4c [1 + 4c (m - 1)(m + 2)] / [1 + 4c (m - 1)],
+% where c = c(lambda R^2) and the base radius grows as dR/dt = 4 c R.
+% See planarStabilitySymbolic.m for a symbolic derivation.
 %
 % The script
-%   1. evaluates sigma_k(Lambda), Lambda = lambda R^2,
+%   1. evaluates sigma_m for m = 1..10 at several Lambda = lambda R^2,
 %   2. validates it against the full 2D solver (src/growth.m) on slightly
 %      perturbed disks.
 %
@@ -22,28 +22,28 @@ clear
 
 % ── Parameters ───────────────────────────────────────────────────────────────
 
-LamSpan = [0 1 10 100 1000];    % Lambda = lambda R^2 for dispersion relations
-kSpan   = 1 : 16;               % azimuthal wavenumbers
-LamGrid = logspace(-1, 4, 61);  % Lambda grid for sigma_k(Lambda)
-kGrid   = [2 3 4 8 16];
+LamSpan = [0 1 10 100];         % Lambda = lambda R^2 for dispersion relations
+mSpan   = 1 : 10;               % azimuthal wavenumbers
 
 LamCheck = [1 10 100];          % 2D solver validation
-kCheck   = 2 : 2 : 8;
+mCheck   = [1 2 4 6 8 10];
 epsCheck = 1e-3;
 
 % ── 1. Linear theory ─────────────────────────────────────────────────────────
 
-sigmaLin = linearGrowthRate(LamSpan(:), kSpan);
-sigmaGrid = linearGrowthRate(LamGrid(:), kGrid);
+sigmaLin = linearGrowthRate(LamSpan(:), mSpan);
 
 % ── 2. Validation with the 2D solver ─────────────────────────────────────────
-% Solve the full nonlinear problem on r = 1 + eps cos(k theta) with lambda =
-% Lambda and project the boundary radial velocity onto cos(k theta).
+% Solve the full nonlinear problem on r = 1 + eps cos(m theta) with lambda =
+% Lambda and project the boundary radial velocity u_r onto 1 and cos(m theta).
+% Writing r = R (1 + eps cos(m theta)) with absolute amplitude delta = R eps,
+%   d(eps)/dt / eps = d(delta)/dt / delta - dR/dt / R,
+% where dR/dt is the mean of u_r and d(delta)/dt its cos(m theta) coefficient.
 
 fprintf('Linear stability: 2D solver validation...\n')
 
-sigma2D  = zeros(length(LamCheck), length(kCheck));
-sigmaRef = zeros(length(LamCheck), length(kCheck));
+sigma2D  = zeros(length(LamCheck), length(mCheck));
+sigmaRef = zeros(length(LamCheck), length(mCheck));
 
 flat = @(u, v) [u v 0 * u];
 Nref = 2;
@@ -52,10 +52,10 @@ P    = 12;
 Dmesh = surfacemesh.disk(P, Nref);
 
 for iL = 1 : length(LamCheck)
-  for ik = 1 : length(kCheck)
+  for im = 1 : length(mCheck)
 
-    kk = kCheck(ik);
-    [xbc, ybc] = polarBoundary(@(s) 1 + epsCheck * cos(kk * s), Mb, P);
+    mm = mCheck(im);
+    [xbc, ybc] = polarBoundary(@(s) 1 + epsCheck * cos(mm * s), Mb, P);
     OmegaC = surfacemesh.image(flat, surfacemesh.ellipticgrid(xbc, ybc, Dmesh));
     UC = growth(OmegaC, LamCheck(iL));
 
@@ -66,62 +66,53 @@ for iL = 1 : length(LamCheck)
       urc{mb} = (xbc{mb} .* ux + ybc{mb} .* uy) ./ hypot(xbc{mb}, ybc{mb});
     end
 
-    delta = modeCoefficient(cellfun(@hypot, xbc, ybc, 'UniformOutput', false), xbc, ybc, kk);
-    sigma2D(iL, ik)  = modeCoefficient(urc, xbc, ybc, kk) / delta;
-    sigmaRef(iL, ik) = linearGrowthRate(LamCheck(iL), kk);
+    rbc   = cellfun(@hypot, xbc, ybc, 'UniformOutput', false);
+    R     = modeCoefficient(rbc, xbc, ybc, 0) / 2;    % mean radius
+    Rdot  = modeCoefficient(urc, xbc, ybc, 0) / 2;    % mean radial velocity
+    delta = modeCoefficient(rbc, xbc, ybc, mm);
+    ddot  = modeCoefficient(urc, xbc, ybc, mm);
 
-    fprintf('  Lambda = %5g, k = %2d: sigma (2D) = %+.5f, sigma (linear) = %+.5f\n', ...
-            LamCheck(iL), kk, sigma2D(iL, ik), sigmaRef(iL, ik))
+    sigma2D(iL, im)  = ddot / delta - Rdot / R;
+    sigmaRef(iL, im) = linearGrowthRate(LamCheck(iL), mm);
+
+    fprintf('  Lambda = %5g, m = %2d: sigma (2D) = %+.5f, sigma (linear) = %+.5f\n', ...
+            LamCheck(iL), mm, sigma2D(iL, im), sigmaRef(iL, im))
   end
 end
 
 % ── Figure ───────────────────────────────────────────────────────────────────
 
-fig = journalFig([6.75 2.5], 2);
+fig = journalFig([3.375 2.5], 2);
 cmap = cmocean('algae', length(LamSpan) + 1);
 cmap = cmap(2 : end, :);
 
-% (a) Dispersion relation sigma_k vs k
-subplot(1, 2, 1)
+% Dispersion relation sigma_m vs m
 for iL = 1 : length(LamSpan)
-  plot(kSpan, sigmaLin(iL, :), '-', 'Color', cmap(iL, :), ...
+  plot(mSpan, sigmaLin(iL, :), '-', 'Color', cmap(iL, :), ...
        'DisplayName', sprintf('$\\Lambda = %g$', LamSpan(iL))), hold on
   iC = find(LamCheck == LamSpan(iL));
   if ~isempty(iC)
-    plot(kCheck, sigma2D(iC, :), 'o', 'Color', cmap(iL, :), 'HandleVisibility', 'off')
+    plot(mCheck, sigma2D(iC, :), 'o', 'Color', cmap(iL, :), 'HandleVisibility', 'off')
   end
 end
-plot(kSpan, 0 * kSpan, 'k:', 'HandleVisibility', 'off')
-xlabel('wavenumber, $k$')
-ylabel('growth rate, $\sigma_k$')
+plot([0 mSpan(end)+1], [0 0], 'k:', 'HandleVisibility', 'off')
+xlim([0 mSpan(end)+1])
+xlabel('wavenumber, $m$')
+ylabel('growth rate, $\sigma_m$')
 legend('Location', 'southwest')
-title('(a) lines: linear theory, circles: 2D solver')
 
-% (b) Decay rate -sigma_k vs Lambda
-subplot(1, 2, 2)
-cmapk = cmocean('dense', length(kGrid) + 1);
-cmapk = cmapk(2 : end, :);
-for ik = 1 : length(kGrid)
-  loglog(LamGrid, -sigmaGrid(:, ik), 'Color', cmapk(ik, :), ...
-         'DisplayName', sprintf('$k = %d$', kGrid(ik))), hold on
-end
-xlim([LamGrid(1) LamGrid(end)])
-xlabel('$\Lambda = \lambda R^2$')
-ylabel('decay rate, $-\sigma_k$')
-legend('Location', 'southwest')
-title('(b)')
 
 % ── Local functions ──────────────────────────────────────────────────────────
 
-% Growth rate sigma_k of boundary perturbation mode k for a disk with
-% Lambda = lambda R^2 (Appendix A). Lambda is a column vector and k a row
-% vector; sigma is length(Lambda) x length(k).
-function sigma = linearGrowthRate(Lam, k)
+% Growth rate sigma_m of the relative amplitude of boundary perturbation mode
+% m for a disk with Lambda = lambda R^2 (Appendix A). Lambda is a column
+% vector and m a row vector; sigma is length(Lambda) x length(m).
+function sigma = linearGrowthRate(Lam, m)
 
   c = (sqrt(1 + Lam / 2) - 1) ./ (2 * Lam);
   c(Lam == 0) = 1/8;
 
-  sigma = -16 * c.^2 .* (k.^2 - 1) ./ (1 + 4 * c .* (k - 1));
+  sigma = -4 * c .* (1 + 4 * c .* (m - 1) .* (m + 2)) ./ (1 + 4 * c .* (m - 1));
 
 end
 
@@ -139,10 +130,11 @@ function [xb, yb] = polarBoundary(rfun, Mb, P)
 
 end
 
-% Fourier coefficient (1/pi) * int g cos(k theta) d(theta) of a boundary
+% Fourier coefficient (1/pi) * int g cos(m theta) d(theta) of a boundary
 % function g, where theta is the polar angle. Integrates spectrally in the
 % segment parameter, so it is independent of the boundary parametrization.
-function a = modeCoefficient(g, xb, yb, k)
+% For m = 0 this is twice the mean of g.
+function a = modeCoefficient(g, xb, yb, m)
 
   P = length(xb{1});
   [~, w] = chebpts(P, [0 1]);
@@ -151,7 +143,7 @@ function a = modeCoefficient(g, xb, yb, k)
   a = 0;
   for mb = 1 : length(xb)
     theta = unwrap(atan2(yb{mb}, xb{mb}));
-    a = a + w * (g{mb} .* cos(k * theta) .* (D * theta)) / pi;
+    a = a + w * (g{mb} .* cos(m * theta) .* (D * theta)) / pi;
   end
 
 end

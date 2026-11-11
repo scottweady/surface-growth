@@ -372,7 +372,7 @@ footer {
 <body>
 
 <aside class="sidebar" id="sidebar">
-  <div class="pkg"><a href="#top">surface-growth</a></div>
+  <div class="pkg"><a href="#top">Growth on surfaces</a></div>
   <nav>
     <ul>
       <li><a href="#top">Home</a></li>
@@ -398,15 +398,6 @@ footer {
         </ul>
       </li>
       <li><a href="#optimal">Optimal surfaces</a></li>
-      <li><a href="#code">Code</a>
-        <ul>
-          <li><a href="#install">Installation</a></li>
-          <li><a href="#quickstart">Quick start</a></li>
-          <li><a href="#solvers">Solvers</a></li>
-          <li><a href="#figures">Reproducing the figures</a></li>
-          <li><a href="#tests">Convergence tests</a></li>
-        </ul>
-      </li>
       <li><a href="#citing">Citing</a></li>
     </ul>
   </nav>
@@ -441,9 +432,9 @@ footer {
 
 <p><a href="https://arxiv.org/abs/2611.14159">arXiv:2611.14159</a> · <a href="https://github.com/scottweady/surface-growth">Code on GitHub</a></p>
 
-<p class="lede">This repository contains the MATLAB code and data behind a study of microbial communities growing on curved and rough surfaces, where each cell's growth slows under the pressure built up by the growth of the whole colony.</p>
+<p>Biofilms rarely grow on flat ground. Teeth carry ridges and lobes, and water-repellent leaves such as the lotus are patterned from the nanometer to the micron scale. The model here is one of the simplest free-boundary descriptions of a growing colony: the cells move like a fluid through a frictional medium, and they grow at a rate that decreases with the local growth-induced pressure. Asymptotic and numerical solutions on the sphere, and homogenization over periodic surfaces, show how surface geometry can slow growth or speed it up.</p>
 
-<p>Biofilms rarely grow on flat ground. Teeth carry ridges and lobes, and water-repellent leaves such as the lotus are patterned from the nanometre to the micron scale. The model here is one of the simplest free-boundary descriptions of a growing colony: the cells move like a fluid through a frictional medium, and they grow at a rate that decreases with the local growth-induced pressure. Asymptotic and numerical solutions on the sphere, and homogenization over periodic surfaces, show how surface geometry can slow growth or speed it up.</p>
+<p>This page was generated using Claude Opus 5.5 (Anthropic).</p>
 
 <h3 id="results" style="margin-top:1.5rem">Main results</h3>
 <ol class="results">
@@ -853,103 +844,11 @@ $$</div>
 <p>So $\inf |\dot\Omega|/|\Omega| = 0$ and $\sup |\dot\Omega|/|\Omega| = 1$. Neither can be reached by a domain of nonzero area, because $e^{-\lambda p} &gt; 0$ and $p \not\equiv 0$. Both examples are instantaneous. The cone stays near-optimal as the colony grows up it, but the strip thickens as it grows. Whether a surface can hold a growing colony near either bound is left open.</p>
 </section>
 
-<!-- ═══════════════════════════════ CODE ═══════════════════════════════ -->
-<section id="code" data-title="Code">
-<h2>Code<a class="anchor" href="#code">¶</a></h2>
-
-<h3 id="install">Installation<a class="anchor" href="#install">¶</a></h3>
-
-<p>The code is MATLAB (tested with R2022a) and depends on two packages, which must be on the MATLAB path:</p>
-<ul>
-  <li><a href="https://www.chebfun.org/">chebfun</a>: see its site for installation.</li>
-  <li><a href="https://github.com/scottweady/surfacefun">surfacefun</a>, a fork of <a href="https://github.com/danfortunato/surfacefun">danfortunato/surfacefun</a>: clone it and add it to the path.</li>
-</ul>
-
-<pre><code>git clone https://github.com/scottweady/surface-growth.git</code></pre>
-
-<p>Running <code>setup.m</code> from the repository root adds this repository's <code>src/</code> and <code>utils/</code> folders to the path.</p>
-
-<h3 id="quickstart">Quick start<a class="anchor" href="#quickstart">¶</a></h3>
-
-<pre><code>setup                          <span class="c">% add src/ and utils/ to the path</span>
-
-cd data,  makedata, cd ..      <span class="c">% solve and save figure data (skips existing .mat files)</span>
-cd figs,  makefigs, cd ..      <span class="c">% write figs/output/fig2.pdf ... fig6.pdf</span>
-cd test,  runtests, cd ..      <span class="c">% convergence studies, written to test/output/</span></code></pre>
-
-<div class="admonition">
-  <div class="title">Precomputed data</div>
-  <p>The figure data in <code>data/</code> is committed, so <code>makefigs</code> runs without re-solving anything. To force a re-solve, delete the corresponding <code>.mat</code> file and run <code>makedata</code> again.</p>
-</div>
-
-<p>A single solve looks like this. The example computes the instantaneous growth rate of a colony covering a hemisphere of radius 10, and the homogenized growth rate over a one-dimensional wave:</p>
-
-<pre><code>setup
-lambda = 1;
-
-<span class="c">% Spherical cap: edge velocity, pressure and velocity on the polar grid</span>
-[U, p, eta, u] = growthSphere(pi/2, lambda, 10, 100);
-
-<span class="c">% Roughness tensor of h = a sin(2 pi x), then the homogenized growth rate</span>
-a = 0.5;
-[K, J] = roughnessTensor(@(x, y) a*sin(2*pi*x));
-dAdt   = growthHomogenized(lambda, K, J);
-dAdt / pi                      <span class="c">% growth rate per unit area; 1 is stress-free</span></code></pre>
-
-<h3 id="solvers">Solvers<a class="anchor" href="#solvers">¶</a></h3>
-
-<p>The core solvers in <code>src/</code> each solve the pressure problem $-\nabla\cdot(\mathbf{K}\nabla p) = e^{-\lambda p}$ by Newton's method, on a different geometry:</p>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Function</th><th>Solves</th><th>Discretization</th></tr></thead>
-  <tbody>
-    <tr><td><code>[U, p] = growth(Omega, lambda, K)</code></td><td>Growth flow on a general <code>surfacemesh</code>, optionally anisotropic ($\mathbf{K}$ defaults to $\mathbf{I}$). Returns the Cartesian velocity $\mathbf{U} = -\mathbf{K}\nabla p$.</td><td>Spectral elements (surfacefun)</td></tr>
-    <tr><td><code>[dOmegadt, u, v, p, x, y] = growthHomogenized(lambda, K, J, Nr, Ntheta)</code></td><td>Homogenized problem on a disk of radius $1/\sqrt{J}$. Returns the area growth rate and the fields.</td><td>Chebyshev–Fourier in polar coordinates (32×31 default)</td></tr>
-    <tr><td><code>[U, p, h, u] = growthSphere(H, lambda, R, N)</code></td><td>Axisymmetric growth on a spherical cap of angle $H$ and radius $R$. Returns the edge velocity and fields.</td><td>1D Chebyshev collocation</td></tr>
-    <tr><td><code>[K, J] = roughnessTensor(h, N)</code></td><td>Cell problem for a periodic graph $z = h(x,y)$ on $[0,1]^2$. Returns $\mathbf{K}^*$ and $J^*$.</td><td>Fourier collocation ($N = 31$ default)</td></tr>
-  </tbody>
-</table>
-</div>
-
-<p><code>utils/</code> holds shared helpers: an RK4 stepper, figure styling, colormaps and a progress bar.</p>
-
-<h3 id="figures">Reproducing the figures<a class="anchor" href="#figures">¶</a></h3>
-
-<p>The scripts in <code>scripts/</code> run the simulations. <code>data/makedata.m</code> runs them and saves their output, and each <code>figs/scripts/figN.m</code> plots it.</p>
-
-<div class="table-wrap">
-<table>
-  <thead><tr><th>Figure</th><th>Script</th><th>Data</th><th>Content</th></tr></thead>
-  <tbody>
-    <tr><td><a href="#sphere">2</a></td><td><code>sphereProfiles.m</code></td><td><code>fig2.mat</code></td><td>Pressure and velocity on caps $H = \pi/2$ for several $R$. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
-    <tr><td><a href="#sphere-numerics">3</a></td><td><code>sphereGrowth.m</code></td><td><code>fig3.mat</code></td><td>Growth trajectories on spheres, plus the planar limit. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
-    <tr><td><a href="#sphere-numerics">4</a></td><td><code>sphereGrowthRate.m</code></td><td><code>fig4.mat</code></td><td>Growth rate against $H$, and $H^*(\lambda)$. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
-    <tr><td><a href="#anisotropy">5</a></td><td><code>roughnessGrowthRate.m</code></td><td><code>fig5.mat</code></td><td>Homogenized growth rate against amplitude, with flow fields. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
-    <tr><td><a href="#anisotropy">6</a></td><td><code>movingBoundaryRoughness.m</code> (calls <code>growthEvolve.m</code>)</td><td><code>fig6/isotropic.mat</code>, <code>fig6/anisotropic.mat</code></td><td>Moving-boundary growth on isotropic and anisotropic surfaces. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
-    <tr><td><a href="#stability">—</a></td><td><code>planarStability.m</code>, <code>planarStabilitySymbolic.m</code></td><td>—</td><td>Dispersion relation $\sigma_m$, checked against the 2D solver and derived symbolically</td></tr>
-  </tbody>
-</table>
-</div>
-
-<p><code>figs/scripts/hero.m</code> makes the sphere image in the README. On this page, Figures 2–6 are interactive and drawn in the browser from data generated by <code>docs/makeinteractive.m</code> (<code>docs/assets/sphere-profiles.js</code>, <code>sphere-growth.js</code>, <code>sphere-radii.js</code>, <code>sphere-rate.js</code>, <code>roughness.js</code>, <code>moving-boundary.js</code>), using the same solvers and committed data as the paper's figures. <code>docs/makeschematic.py</code> renders the light and dark versions of the Fig. 1 schematic by recolouring the exported PDF; it needs Ghostscript.</p>
-
-<h3 id="tests">Convergence tests<a class="anchor" href="#tests">¶</a></h3>
-
-<p><code>test/runtests.m</code> runs the convergence studies and writes their output to <code>test/output/</code>:</p>
-<ul>
-  <li><code>sphereConvergence.m</code>: the spherical-cap solver in $N$ and $\Delta t$.</li>
-  <li><code>roughnessConvergence.m</code>: the roughness tensor in the cell-problem resolution.</li>
-  <li><code>homogenizationConvergence.m</code>: the homogenized disk solver in $(N_r, N_\theta)$.</li>
-  <li><code>growthConvergence.m</code>: the moving-boundary simulation.</li>
-</ul>
-</section>
-
 <!-- ═══════════════════════════════ CITING ═══════════════════════════════ -->
 <section id="citing" data-title="Citing">
 <h2>Citing<a class="anchor" href="#citing">¶</a></h2>
 
-<p>If you use this code, please cite the paper:</p>
+<p>If you found this work useful in your research, please cite the paper:</p>
 <p style="padding-left:1.25rem;border-left:3px solid var(--border)">S. Weady, Geometric regulation of stress-limited growth on surfaces, arXiv:2611.14159 (2026). <a href="https://arxiv.org/abs/2611.14159">arxiv.org/abs/2611.14159</a></p>
 
 <pre><code>@article{weady2026geometric,
