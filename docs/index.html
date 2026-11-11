@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stress-Limited Surface Growth</title>
+<meta name="description" content="Geometric regulation of stress-limited growth on surfaces: model, results, and MATLAB code."/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet"/>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
+<style>
+/* Palette after Documenter's documenter-light / documenter-dark themes */
+:root {
+  --bg: #ffffff;
+  --side-bg: #f5f5f5;
+  --side-fg: #222222;
+  --side-muted: #555555;
+  --side-active-bg: #ffffff;
+  --side-hover: #ebebeb;
+  --fg: #222222;
+  --muted: #6b6b6b;
+  --link: #2e63b8;
+  --link-hover: #363636;
+  --border: #dbdbdb;
+  --code-bg: #f5f5f5;
+  --code-fg: #222222;
+  --table-head: #f5f5f5;
+  --note-bg: #ebf8ff;
+  --note-border: #209cee;
+  --fig-bg: #ffffff;
+  --accent: #389826;
+  --wave2: #2b5cad;
+  --sg-base: var(--bg);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1f2424;
+    --side-bg: #282f2f;
+    --side-fg: #ececec;
+    --side-muted: #b5b5b5;
+    --side-active-bg: #1f2424;
+    --side-hover: #333c3c;
+    --fg: #ececec;
+    --muted: #a6a6a6;
+    --link: #5b9be8;
+    --link-hover: #ffffff;
+    --border: #5e6d6f;
+    --code-bg: #282f2f;
+    --code-fg: #ececec;
+    --table-head: #282f2f;
+    --note-bg: #1d2e3a;
+    --note-border: #1d72aa;
+    --fig-bg: #f4f4f4;
+    --accent: #6cc04a;
+    --wave2: #6f9be6;
+    --sg-base: var(--fg);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1f2424;
+  --side-bg: #282f2f;
+  --side-fg: #ececec;
+  --side-muted: #b5b5b5;
+  --side-active-bg: #1f2424;
+  --side-hover: #333c3c;
+  --fg: #ececec;
+  --muted: #a6a6a6;
+  --link: #5b9be8;
+  --link-hover: #ffffff;
+  --border: #5e6d6f;
+  --code-bg: #282f2f;
+  --code-fg: #ececec;
+  --table-head: #282f2f;
+  --note-bg: #1d2e3a;
+  --note-border: #1d72aa;
+  --fig-bg: #f4f4f4;
+  --accent: #6cc04a;
+  --wave2: #6f9be6;
+  --sg-base: var(--fg);
+}
+
+* { box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Lato Medium", "Lato", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--link); text-decoration: none; }
+a:hover { color: var(--link-hover); }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 18rem;
+  background: var(--side-bg);
+  color: var(--side-fg);
+  overflow-y: auto;
+  padding: 1.5rem 0 2rem;
+  border-right: 1px solid var(--border);
+  z-index: 20;
+}
+.sidebar .logo { display: block; width: 6.5rem; margin: 0 auto 0.75rem; }
+.sidebar .pkg {
+  font-size: 1.35rem; font-weight: 700; text-align: center;
+  padding: 0 1rem; margin-bottom: 1.25rem; line-height: 1.3;
+}
+.sidebar .pkg a { color: var(--side-fg); }
+.sidebar ul { list-style: none; margin: 0; padding: 0; }
+.sidebar > nav > ul > li > a {
+  display: block; padding: 0.45rem 1.25rem; color: var(--side-fg);
+  border-left: 3px solid transparent;
+}
+.sidebar ul ul a {
+  display: block; padding: 0.25rem 1.25rem 0.25rem 2.25rem;
+  font-size: 0.9rem; color: var(--side-muted);
+  border-left: 3px solid transparent;
+}
+.sidebar a:hover { background: var(--side-hover); }
+.sidebar a.active {
+  background: var(--side-active-bg);
+  border-left-color: var(--link);
+  font-weight: 700; color: var(--side-fg);
+}
+.sidebar ul ul { display: none; }
+.sidebar li.open > ul { display: block; }
+
+/* ── Main column ─────────────────────────────────────────────────────── */
+.main { margin-left: 18rem; min-height: 100vh; }
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 0.75rem;
+  height: 3.5rem; padding: 0 2rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.topbar .crumb { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar button, .topbar a.icon {
+  background: none; border: 0; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: 0.9rem; padding: 0.35rem 0.5rem; border-radius: 4px;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.topbar button:hover, .topbar a.icon:hover { color: var(--fg); background: var(--side-hover); }
+.topbar svg { width: 1.1rem; height: 1.1rem; fill: currentColor; }
+#menu-btn { display: none; }
+
+.content { max-width: 52rem; margin: 0 auto; padding: 1.5rem 2rem 4rem; }
+.content h1 { font-size: 2.25rem; line-height: 1.2; margin: 1rem 0 1rem; font-weight: 700; }
+.content h2 {
+  font-size: 1.6rem; margin: 3rem 0 1rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border); font-weight: 700;
+}
+.content h3 { font-size: 1.25rem; margin: 2rem 0 0.75rem; font-weight: 700; }
+.content h2, .content h3 { scroll-margin-top: 4.5rem; }
+.content h2 a.anchor, .content h3 a.anchor { color: var(--muted); opacity: 0; margin-left: 0.4rem; font-weight: 400; }
+.content h2:hover a.anchor, .content h3:hover a.anchor { opacity: 1; }
+.content p, .content li { font-size: 1rem; }
+.content p { margin: 0 0 1rem; }
+.content ul { padding-left: 1.5rem; }
+.content li { margin-bottom: 0.35rem; }
+
+figure.hero { margin: 1rem auto 0.5rem; }
+figure.hero img { width: 20rem; max-width: 80%; margin: 0 auto; }
+figure.hero figcaption { text-align: center; max-width: 34rem; margin: 0.4rem auto 0; }
+.lede { font-size: 1.1rem; color: var(--fg); }
+
+code, pre { font-family: "JuliaMono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+code { font-size: 0.85em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; }
+pre {
+  background: var(--code-bg); color: var(--code-fg);
+  padding: 0.85rem 1rem; border-radius: 4px; overflow-x: auto;
+  font-size: 0.85rem; line-height: 1.5; margin: 0 0 1.25rem;
+  border: 1px solid var(--border);
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+pre .c { color: #228b22; }
+:root[data-theme="dark"] pre .c { color: #7fbf7f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) pre .c { color: #7fbf7f; } }
+
+.math-display { position: relative; overflow-x: auto; overflow-y: hidden; margin: 0 0 1.25rem; }
+.katex-display { margin: 0.5rem 0; }
+
+figure { margin: 1.5rem 0 2rem; }
+figure img { display: block; width: 100%; height: auto; }
+/* Figures come as <name>-light.png and <name>-dark.png (docs/makeschematic.py); show the one for the theme */
+figure img.fig-dark { display: none; }
+:root[data-theme="dark"] figure img.fig-light { display: none; }
+:root[data-theme="dark"] figure img.fig-dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) figure img.fig-light { display: none; }
+  :root:not([data-theme="light"]) figure img.fig-dark { display: block; }
+}
+figcaption { font-size: 0.9rem; color: var(--muted); margin-top: 0.6rem; line-height: 1.45; }
+figcaption b { color: var(--fg); }
+
+/* ── Interactive widgets ─────────────────────────────────────────────── */
+.widget {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 1rem 1.25rem 0.75rem; margin: 1.5rem 0 2rem;
+}
+.widget .w-title { font-weight: 700; margin-bottom: 0.75rem; }
+.sw-body { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: center; }
+.sw-view { display: flex; align-items: stretch; gap: 0.6rem; flex: 0 1 auto; max-width: 100%; }
+.sw-sphere { width: 300px; max-width: calc(100vw - 7rem); height: auto; aspect-ratio: 1; display: block; align-self: center; }
+.sw-cbar { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; padding: 1.5rem 0 2rem; }
+.sw-cbar-row { display: flex; align-items: stretch; gap: 0.3rem; flex: 1; }
+.sw-bar { width: 14px; height: 100%; display: block; border-radius: 2px; }
+.sw-ticks { display: flex; flex-direction: column; justify-content: space-between; font-size: 0.8rem; color: var(--muted); line-height: 1; }
+.sw-cbar-label { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+.sw-side { flex: 1 1 15rem; min-width: 0; }
+.sw-ctl { margin-bottom: 1rem; }
+.sw-ctl label { display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 0.25rem; }
+.sw-ctl label output { font-variant-numeric: tabular-nums; font-weight: 700; }
+.sw-row { display: flex; align-items: center; gap: 0.5rem; }
+.sw-row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.sw-row button {
+  width: 2rem; height: 2rem; flex: none; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border); background: var(--code-bg); color: var(--fg); font-size: 0.75rem;
+}
+.sw-row button:hover { border-color: var(--accent); }
+.sw-read { display: grid; grid-template-columns: auto auto; gap: 0.2rem 1rem; font-size: 0.88rem; margin: 0.25rem 0 0; }
+.sw-read dt { color: var(--muted); }
+.sw-read dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.sg-ctls { display: flex; flex-wrap: wrap; gap: 0 2rem; }
+.sg-ctls .sw-ctl { flex: 1 1 14rem; }
+.sg-body { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: flex-start; }
+.sg-left { position: relative; flex: 0 1 auto; max-width: 100%; }
+.sg-left .sw-sphere { width: 250px; }
+.sg-read { max-width: 20rem; margin-top: 0.5rem; }
+.sg-right { flex: 1 1 18rem; }
+/* (b): this plot's frame starts 40/340 of the way across */
+.sg-letter { left: calc(1.6rem + (100% - 1.6rem) * 0.1176 + 0.4rem); }
+.sg-legend { gap: 0.2rem 0.75rem; }
+/* radii as one green ramp, mixed towards --sg-base (the background in light mode, the
+   text colour in dark mode) so R = 10 is lightest, as in the paper, and all stay visible */
+.sg-c0 { --sg: color-mix(in srgb, var(--accent) 38%, var(--sg-base)); }
+.sg-c1 { --sg: color-mix(in srgb, var(--accent) 50%, var(--sg-base)); }
+.sg-c2 { --sg: color-mix(in srgb, var(--accent) 62%, var(--sg-base)); }
+.sg-c3 { --sg: color-mix(in srgb, var(--accent) 75%, var(--sg-base)); }
+.sg-c4 { --sg: color-mix(in srgb, var(--accent) 88%, var(--sg-base)); }
+.sg-c5 { --sg: var(--accent); }
+.rg-sw.sg-sw { border-color: var(--sg); }
+.rg-sw.sg-sw.sg-thick { border-top-width: 3.5px; }
+.rg-sw.sg-sw.sg-plane { border-color: var(--fg); border-top-style: dashed; }
+path.sg-curve { fill: none; stroke: var(--sg); stroke-width: 2; }
+path.sg-curve.sg-thick { stroke-width: 3.5; }
+path.sg-plane { fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 6 4; }
+.sg-guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 3; }
+figure.fig3 .widget { margin: 0 0 0.6rem; }
+.rw-ctl { max-width: 26rem; }
+.rw-read { font-size: 0.92rem; margin-top: 0.4rem; }
+.rw-read output { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rw-panels { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; }
+.rw-panel { flex: 1 1 16rem; min-width: 0; }
+.rw-plot { position: relative; padding-left: 1.6rem; }
+.rw-plot svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; }
+#rw-b { cursor: crosshair; }
+/* inside the frame's top-left corner: the frame starts 46/420 of the way across the SVG */
+.rw-letter { position: absolute; left: calc(1.6rem + (100% - 1.6rem) * 0.1095 + 0.4rem); top: calc((100% - 1.6rem) * 0 + 0.35rem); font-size: 0.85rem; color: var(--muted); z-index: 1; pointer-events: none; }
+.rw-ylabel {
+  position: absolute; left: 0.55rem; top: 46%; transform: translate(-50%, -50%) rotate(-90deg);
+  white-space: nowrap; font-size: 0.85rem; color: var(--muted);
+}
+.rw-xlabel { text-align: center; font-size: 0.85rem; color: var(--muted); padding-left: 2.5rem; margin-top: -0.2rem; }
+.rw-frame { fill: none; stroke: var(--fg); stroke-width: 1.2; }
+.rw-tick { stroke: var(--fg); stroke-width: 1.2; }
+.rw-axes text { fill: var(--muted); font-size: 13px; font-family: inherit; }
+.rw-dash { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.rw-ref { fill: none; stroke: var(--muted); stroke-width: 1.3; opacity: 0.45; }
+.rw-cur, .rw-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.rw-guide { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.7; }
+.rw-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+figure.fig4 .widget { margin: 0 0 0.6rem; }
+.rg-top { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; align-items: flex-end; margin-bottom: 0.75rem; }
+.rg-modes { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.rg-modes button {
+  font: inherit; font-size: 0.88rem; padding: 0.35rem 0.75rem; cursor: pointer;
+  background: none; color: var(--muted); border: 0; display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.rg-modes button + button { border-left: 1px solid var(--border); }
+.rg-modes button[aria-pressed="true"] { background: var(--code-bg); color: var(--fg); font-weight: 700; }
+.rg-ctl { flex: 1 1 14rem; margin-bottom: 0; }
+.rg-body { display: flex; flex-wrap: wrap; gap: 1rem 1.75rem; align-items: flex-start; }
+.rg-left { flex: 0 1 auto; max-width: 100%; }
+.rg-right { flex: 1 1 16rem; }
+.rg-disk { width: 250px; max-width: calc(100vw - 7rem); height: auto; aspect-ratio: 1; display: block; align-self: center; }
+.rg-bar { width: 14px; height: 100%; display: block; border-radius: 2px; }
+.rg-h { text-align: center; font-size: 0.9rem; margin: 0.3rem 3rem 0.6rem 0; min-height: 1.4em; }
+.rg-read { max-width: 20rem; }
+.rg-legend { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-size: 0.85rem; color: var(--muted); padding-left: 2.5rem; margin-top: 0.4rem; }
+.rg-sw { display: inline-block; width: 1.4rem; height: 0; border-top: 2.5px solid; vertical-align: middle; margin-right: 0.35rem; }
+.rg-sw0 { border-color: var(--fg); }
+.rg-sw1 { border-color: var(--accent); border-top-style: dashed; }
+.rg-sw2 { border-color: var(--wave2); border-top-style: dotted; }
+.rg-c0 { fill: none; stroke: var(--fg); stroke-width: 1.8; }
+.rg-c1, .rg-c2 { fill: none; stroke-width: 1.8; opacity: 0.55; }
+.rg-c1 { stroke: var(--accent); stroke-dasharray: 9 4 2 4; }
+.rg-c2 { stroke: var(--wave2); stroke-dasharray: 2 3; }
+.rg-c1.on, .rg-c2.on { stroke-width: 3; opacity: 1; }
+.rg-dot { stroke: var(--bg); stroke-width: 2; }
+.rg-dot1 { fill: var(--accent); }
+.rg-dot2 { fill: var(--wave2); }
+figure.fig5 .widget { margin: 0 0 0.6rem; }
+.mb-ctl { max-width: 26rem; }
+.mb-body { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: flex-start; }
+.mb-shapes { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; flex: 0 1 22rem; max-width: 100%; }
+.mb-shape { position: relative; flex: 1 1 9rem; max-width: 10.5rem; }
+.mb-shape svg { display: block; width: 100%; height: auto; }
+.mb-letter { position: absolute; left: 0; top: 0; font-size: 0.85rem; color: var(--muted); }
+.mb-cap { text-align: center; font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; white-space: nowrap; }
+/* (c): this plot's frame starts 34/340 of the way across */
+.mb-right .rw-letter { left: calc(1.6rem + (100% - 1.6rem) * 0.1 + 0.4rem); }
+.mb-right { flex: 1 1 18rem; }
+.mb-read { flex: 1 1 100%; margin-top: 0.4rem; max-width: 19rem; }
+.mb-c-iso, .mb-c-aniso { fill: none; stroke-width: 2.5; }
+.mb-c-iso { stroke: var(--wave2); }
+.mb-c-aniso { stroke: var(--accent); }
+figure.fig6 .widget { margin: 0 0 0.6rem; }
+.pf-read { max-width: 26rem; margin: 0 0 0.75rem; }
+/* (a), (b): the frame starts 52/420 of the way across */
+.pf-letter { left: calc(1.6rem + (100% - 1.6rem) * 0.1238 + 0.4rem); }
+figure.fig2 .widget { margin: 0 0 0.6rem; }
+.widget .w-note { font-size: 0.85rem; color: var(--muted); margin: 0.75rem 0 0; line-height: 1.45; }
+
+.admonition {
+  border-left: 5px solid var(--note-border); background: var(--note-bg);
+  border-radius: 4px; padding: 0.75rem 1rem; margin: 0 0 1.25rem;
+}
+.admonition .title { font-weight: 700; margin-bottom: 0.25rem; }
+.admonition p:last-child { margin-bottom: 0; }
+
+.table-wrap { position: relative; overflow-x: auto; margin: 0 0 1.25rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.45rem 0.75rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--table-head); font-weight: 700; }
+
+.results { counter-reset: r; list-style: none; padding-left: 0; }
+.results li { counter-increment: r; position: relative; padding-left: 2.25rem; margin-bottom: 0.75rem; }
+.results li::before {
+  content: counter(r); position: absolute; left: 0; top: 0.05rem;
+  width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 0.8rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+footer {
+  border-top: 1px solid var(--border); margin-top: 3rem; padding-top: 1rem;
+  font-size: 0.85rem; color: var(--muted);
+}
+
+/* ── Narrow screens: sidebar becomes a drawer ───────────────────────── */
+@media (max-width: 1055px) {
+  .sidebar { transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: none; }
+  body.menu-open .sidebar { transform: none; box-shadow: 0 0 2rem rgba(0,0,0,0.3); }
+  .main { margin-left: 0; }
+  #menu-btn { display: inline-flex; }
+  .topbar { padding: 0 1rem; }
+  .content { padding: 1rem 1rem 3rem; }
+  .content h1 { font-size: 1.8rem; }
+  .topbar a.icon span { display: none; }
+}
+</style>
+<script>
+  try { var t = localStorage.getItem("sg-theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="pkg"><a href="#top">surface-growth</a></div>
+  <nav>
+    <ul>
+      <li><a href="#top">Home</a></li>
+      <li><a href="#model">The model</a>
+        <ul>
+          <li><a href="#equations">Equations of motion</a></li>
+          <li><a href="#sensing">Sensing slows growth</a></li>
+          <li><a href="#dimensionless">Dimensionless form</a></li>
+        </ul>
+      </li>
+      <li><a href="#sphere">Growth on the sphere</a>
+        <ul>
+          <li><a href="#planar-limit">Large spheres and the plane</a></li>
+          <li><a href="#stability">Linear stability</a></li>
+          <li><a href="#sphere-numerics">Finite spheres</a></li>
+        </ul>
+      </li>
+      <li><a href="#rough">Periodic surfaces</a>
+        <ul>
+          <li><a href="#homogenization">Homogenization</a></li>
+          <li><a href="#bounds">The roughness tensor</a></li>
+          <li><a href="#anisotropy">Anisotropy accelerates growth</a></li>
+        </ul>
+      </li>
+      <li><a href="#optimal">Optimal surfaces</a></li>
+      <li><a href="#code">Code</a>
+        <ul>
+          <li><a href="#install">Installation</a></li>
+          <li><a href="#quickstart">Quick start</a></li>
+          <li><a href="#solvers">Solvers</a></li>
+          <li><a href="#figures">Reproducing the figures</a></li>
+          <li><a href="#tests">Convergence tests</a></li>
+        </ul>
+      </li>
+      <li><a href="#citing">Citing</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <button id="menu-btn" aria-label="Open navigation">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </button>
+    <div class="crumb" id="crumb">Home</div>
+    <a class="icon" href="https://github.com/scottweady/surface-growth" title="Source on GitHub">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span>GitHub</span>
+    </a>
+    <button id="theme-btn" title="Toggle light/dark theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zm0 2v14a7 7 0 010-14z"/></svg>
+    </button>
+  </header>
+
+  <article class="content">
+
+<!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+<section id="top" data-title="Home">
+<figure class="hero">
+  <img class="fig-light" src="assets/fig1-light.png" alt="Schematic: a green colony Omega(t) on a grey sphere M, with its boundary parameterized by X(s,t)"/>
+  <img class="fig-dark" src="assets/fig1-dark.png" alt="Schematic: a green colony Omega(t) on a grey sphere M, with its boundary parameterized by X(s,t)"/>
+  <figcaption><b>Figure 1.</b> The colony $\Omega(t)$ (green) grows on a smooth surface $M$ (grey) embedded in $\mathbb{R}^3$. Its edge $\partial\Omega(t)$ is the curve $\mathbf{X}(s,t)$.</figcaption>
+</figure>
+
+<h1>Geometric regulation of stress-limited growth on surfaces</h1>
+
+<p><a href="https://arxiv.org/abs/2611.14159">arXiv:2611.14159</a> · <a href="https://github.com/scottweady/surface-growth">Code on GitHub</a></p>
+
+<p class="lede">This repository contains the MATLAB code and data behind a study of microbial communities growing on curved and rough surfaces, where each cell's growth slows under the pressure built up by the growth of the whole colony.</p>
+
+<p>Biofilms rarely grow on flat ground. Teeth carry ridges and lobes, and water-repellent leaves such as the lotus are patterned from the nanometre to the micron scale. The model here is one of the simplest free-boundary descriptions of a growing colony: the cells move like a fluid through a frictional medium, and they grow at a rate that decreases with the local growth-induced pressure. Asymptotic and numerical solutions on the sphere, and homogenization over periodic surfaces, show how surface geometry can slow growth or speed it up.</p>
+
+<h3 id="results" style="margin-top:1.5rem">Main results</h3>
+<ol class="results">
+  <li><b>Sensing slows growth, globally.</b> For any positive growth law that decreases with pressure, the total growth rate of the colony decreases with the sensitivity $\lambda$, even though the pressure itself decreases pointwise. For large $\lambda$, growth concentrates at the edge and $|\dot\Omega| \approx (2\Gamma/\lambda)^{1/2}\,|\partial\Omega|$.</li>
+  <li><b>Curvature slows growth.</b> On a sphere, a colony of a given area grows more slowly the smaller the sphere. The flat plane is the fastest sphere. On a small sphere the growth rate peaks when the colony edge reaches the equator.</li>
+  <li><b>Anisotropic roughness speeds growth.</b> On a periodically corrugated surface the colony behaves as if on a flat surface with an effective mobility tensor $\mathbf{K}^*$. One-dimensional ridges relieve stress and push the growth rate towards the stress-free limit. A symmetric egg-crate pattern leaves it unchanged.</li>
+  <li><b>No optimal surface exists.</b> Among surfaces of fixed colony area, the growth rate can be made arbitrarily close to zero (sharp cones) or to the stress-free rate (thin strips), but neither bound is attained.</li>
+</ol>
+
+<div class="admonition">
+  <div class="title">On this page</div>
+  <p><a href="#model">The model</a> sets out the equations. <a href="#sphere">Growth on the sphere</a>, <a href="#rough">Periodic surfaces</a> and <a href="#optimal">Optimal surfaces</a> summarize the analysis with the figures from the paper. <a href="#code">Code</a> covers installation and how to regenerate every figure.</p>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ MODEL ═══════════════════════════════ -->
+<section id="model" data-title="The model">
+<h2>The model<a class="anchor" href="#model">¶</a></h2>
+
+<h3 id="equations">Equations of motion<a class="anchor" href="#equations">¶</a></h3>
+
+<p>The colony occupies a connected domain $\Omega(t)$ on a smooth surface $M$ (<a href="#top">Fig. 1</a>). It is treated as an inviscid fluid with stress $-p\mathbf{I}$ on a frictional substrate, where $p$ is the growth pressure. The cell velocity $\mathbf{u}$, tangent to $M$, satisfies a Darcy-type law with friction coefficient $\zeta$ and a volumetric growth constraint:</p>
+
+<div class="math-display">$$
+\begin{aligned}
+\zeta\,\mathbf{u} + \nabla_M p &= \mathbf{0} && \text{in } \Omega,\\
+\nabla_M\cdot\mathbf{u} &= \gamma(p) && \text{in } \Omega,\\
+p &= 0 && \text{on } \partial\Omega.
+\end{aligned}
+$$</div>
+
+<p>Here $\nabla_M$ and $\nabla_M\cdot$ are the surface gradient and divergence. The edge moves with the cells,</p>
+
+<div class="math-display">$$
+\frac{\partial\mathbf{X}}{\partial t} = \mathbf{u}(\mathbf{X}),
+\qquad\text{so}\qquad
+|\dot\Omega| = \int_{\partial\Omega}\mathbf{u}\cdot\hat{\mathbf{n}}\,\mathrm{d}\Gamma = \int_\Omega \gamma\,\mathrm{d}S .
+$$</div>
+
+<p>The colony is <em>stress-sensing</em> when the growth rate $\gamma$ depends on $p$. Eliminating the velocity leaves a nonlinear Poisson problem for the pressure, with the Laplace–Beltrami operator $\Delta_M$:</p>
+
+<div class="math-display">$$
+-\zeta^{-1}\Delta_M p = \gamma(p) \ \ \text{in } \Omega, \qquad p = 0 \ \ \text{on } \partial\Omega .
+$$</div>
+
+<h3 id="sensing">Sensing slows growth<a class="anchor" href="#sensing">¶</a></h3>
+
+<p>Write $\gamma(p) = \widehat\gamma(\lambda p)$ with $\widehat\gamma$ smooth, positive and non-increasing, and $\lambda \ge 0$ a sensitivity. A maximum-principle argument shows that if $\lambda_1 &gt; \lambda_2$ then $\lambda_1 p_1 \ge \lambda_2 p_2$ and $p_1 \le p_2$. So a more sensitive colony has a lower pressure everywhere, yet grows more slowly overall. Bounding $p$ from both sides gives $\|p\|_\infty = O(\lambda^a)$ with $-1 \le a \le 0$.</p>
+
+<p>For large $\lambda$, growth is confined to a boundary layer at the edge. A one-dimensional balance across that layer gives the edge velocity and the total growth rate:</p>
+
+<div class="math-display">$$
+\frac{1}{\zeta}\frac{\partial p}{\partial\eta}\Big|_{\eta=0} = \sqrt{\frac{2\Gamma}{\lambda}},
+\qquad
+|\dot\Omega| \approx \Big(\frac{2\Gamma}{\lambda}\Big)^{1/2}|\partial\Omega|,
+\qquad
+\Gamma = \int_0^\infty \widehat\gamma(q)\,\mathrm{d}q .
+$$</div>
+
+<p>Growth therefore scales with the <em>perimeter</em> of the colony, not its area. For a circular colony this gives the linear growth of the radius at late times that is seen in experiments. The rest of the work uses $\gamma(p) = \tau^{-1}e^{-\lambda p}$.</p>
+
+<h3 id="dimensionless">Dimensionless form<a class="anchor" href="#dimensionless">¶</a></h3>
+
+<p>Lengths are scaled by the colony size $L$, time by the growth time $\tau$, and pressure by $\zeta L^2/\tau$. The equations become</p>
+
+<div class="math-display">$$
+\begin{aligned}
+\mathbf{u} + \nabla_M p &= \mathbf{0}, & \nabla_M\cdot\mathbf{u} &= e^{-\lambda p} && \text{in } \Omega,\\
+p &= 0, & \partial_t\mathbf{X} &= \mathbf{u}(\mathbf{X}) && \text{on } \partial\Omega,
+\end{aligned}
+$$</div>
+
+<p>and the only parameter apart from the geometry is the dimensionless sensitivity $\lambda$. For a colony of size 1&nbsp;mm, cell growth time 1&nbsp;hr and edge speed 10&nbsp;µm/min, $\lambda$ is of order 1 to 10. In local coordinates $\boldsymbol{\xi}$ with metric $\mathbf{G}$ and area element $J = \sqrt{\det\mathbf{G}}$, the Laplace–Beltrami operator is $\Delta_M v = J^{-1}\nabla_{\boldsymbol{\xi}}\cdot(J\mathbf{G}^{-1}\nabla_{\boldsymbol{\xi}}v)$.</p>
+</section>
+
+<!-- ═══════════════════════════════ SPHERE ═══════════════════════════════ -->
+<section id="sphere" data-title="Growth on the sphere">
+<h2>Growth on the sphere<a class="anchor" href="#sphere">¶</a></h2>
+
+<p>On a sphere of radius $R$, an axisymmetric colony is a polar cap $0 \le \eta &lt; H(t)$ of area $2\pi R^2(1-\cos H)$. The pressure solves a two-point boundary value problem and the cap angle moves with the edge velocity:</p>
+
+<div class="math-display">$$
+-\frac{1}{R^2\sin\eta}\frac{\partial}{\partial\eta}\Big(\sin\eta\,\frac{\partial p}{\partial\eta}\Big) = e^{-\lambda p},
+\qquad
+\frac{\partial p}{\partial\eta}\Big|_{0} = 0,\quad p\big|_{H} = 0,
+\qquad
+\frac{dH}{dt} = -\frac{1}{R^2}\frac{\partial p}{\partial\eta}\Big|_{H}.
+$$</div>
+
+<p>Rescaling $\tilde p = p/R^2$ maps this to the unit sphere with an effective sensitivity $\tilde\lambda = R^2\lambda$. Without sensing ($\lambda = 0$) the area grows exponentially and $H(t) = 2\sin^{-1}\!\big(\sin(H_0/2)\,e^{t/2}\big)$, whatever the value of $R$. With sensing, the effective sensitivity grows like $R^2$.</p>
+
+<figure class="fig2">
+<div class="widget" id="profile-widget">
+  <div class="w-title">Pressure and velocity on the hemisphere $H = \pi/2$, $\lambda = 1$</div>
+  <div class="sw-ctl rw-ctl">
+    <label for="pf-r"><span>sphere radius, $R$</span><output id="pf-r-val"></output></label>
+    <div class="sw-row"><input type="range" id="pf-r" min="0" max="32" step="1" value="8"/><button id="pf-play" aria-label="Play radius">▶</button></div>
+  </div>
+  <dl class="sw-read pf-read">
+    <dt>pressure at the pole, $p(0)$</dt><dd id="pf-p"></dd>
+    <dt>edge velocity, $u(\pi/2)$</dt><dd id="pf-u"></dd>
+    <dt>colony area, $|\Omega| = 2\pi R^2$</dt><dd id="pf-area"></dd>
+  </dl>
+  <div class="rw-panels">
+    <div class="rw-panel">
+      <div class="rw-plot">
+        <span class="rw-letter pf-letter">(a)</span>
+        <div class="rw-ylabel">pressure, $p$</div>
+        <svg id="pf-a" viewBox="0 0 420 300" role="img" aria-label="Pressure against polar angle for the chosen radius"></svg>
+      </div>
+      <div class="rw-xlabel">polar angle, $\eta$</div>
+    </div>
+    <div class="rw-panel">
+      <div class="rw-plot">
+        <span class="rw-letter pf-letter">(b)</span>
+        <div class="rw-ylabel">velocity, $u$</div>
+        <svg id="pf-b" viewBox="0 0 420 300" role="img" aria-label="Polar velocity against polar angle for the chosen radius"></svg>
+      </div>
+      <div class="rw-xlabel">polar angle, $\eta$</div>
+    </div>
+  </div>
+</div>
+  <figcaption><b>Figure 2.</b> (a) Pressure and (b) velocity profiles for growth on a sphere of radius $R$ with fixed polar angle $H = \pi/2$, for the chosen $R$ (green), with the paper's radii $R = 10$, 12, 14, 18, 26 and 42 in grey. Markers show the pressure at the pole and the velocity at the edge. The pressure increases monotonically with the radius of the sphere while the polar velocity decreases. The area of the colony grows with $R$, so these comparisons are between domains of different areas. In all cases $\lambda = 1$. Move the slider or press play to change $R$.</figcaption>
+</figure>
+
+<h3 id="planar-limit">Large spheres and the plane<a class="anchor" href="#planar-limit">¶</a></h3>
+
+<p>Let $R \to \infty$ at fixed area, so that $H \to 0$ with $RH \to \tilde H = (|\Omega|/\pi)^{1/2}$. The equations become those of a disk of radius $\tilde H$ in the plane, which have a closed-form solution:</p>
+
+<div class="math-display">$$
+u = \frac{32\,c^2\,\tilde\eta}{1 - 8c^2\lambda\tilde\eta^2},
+\qquad
+p = \frac{2}{\lambda}\log\!\Big(\frac{1}{8c} - c\,\lambda\tilde\eta^2\Big),
+\qquad
+c = c(\lambda\tilde H^2) = \frac{(1+\lambda\tilde H^2/2)^{1/2} - 1}{2\lambda\tilde H^2}.
+$$</div>
+
+<p>For $\lambda\tilde H^2 \gg 1$ the radius grows linearly, $\tilde H(t) \sim (2/\lambda)^{1/2}\,t$, in line with the boundary-layer estimate.</p>
+
+<h3 id="stability">Linear stability<a class="anchor" href="#stability">¶</a></h3>
+
+<p>Perturb the edge of the disk with wavenumber $m \ge 1$ and relative amplitude $\varepsilon(t)$, so that $r = \tilde H(1 + \varepsilon\cos m\xi)$. Liouville's representation of solutions to $-\Delta p = e^{-\lambda p}$ gives the perturbed pressure in closed form, and the kinematic condition gives $\mathrm{d}\varepsilon/\mathrm{d}t = \sigma\varepsilon$ with</p>
+
+<div class="math-display">$$
+\sigma = -4c\,\frac{1 + 4c\,(m-1)(m+2)}{1 + 4c\,(m-1)} &lt; 0 .
+$$</div>
+
+<p>Since $c &gt; 0$, every mode decays: the circular colony is linearly stable for every $\lambda \ge 0$. Because $\tilde H$ also changes in time, the amplitude decays monotonically but not exactly exponentially. The scripts <code>planarStability.m</code> and <code>planarStabilitySymbolic.m</code> check this formula numerically and symbolically.</p>
+
+<h3 id="sphere-numerics">Finite spheres<a class="anchor" href="#sphere-numerics">¶</a></h3>
+
+<p>On finite spheres the pressure is solved by Chebyshev collocation in $\eta$ ($N = 100$) with Newton's method, using chebfun. The cap is advanced with fourth-order Runge–Kutta ($\Delta t = 0.1$).</p>
+
+<figure class="fig3">
+<div class="widget" id="sphere-widget">
+  <div class="w-title">Growth on a sphere: pointwise growth rate and area</div>
+  <div class="sg-ctls">
+    <div class="sw-ctl">
+      <label for="sw-t"><span>time, $t$</span><output id="sw-t-val"></output></label>
+      <div class="sw-row"><input type="range" id="sw-t" min="0" max="21" step="0.021" value="10"/><button id="sw-t-play" aria-label="Play time">▶</button></div>
+    </div>
+    <div class="sw-ctl">
+      <label for="sw-l"><span>sensitivity, $\lambda$</span><output id="sw-l-val"></output></label>
+      <div class="sw-row"><input type="range" id="sw-l" min="0" max="19" step="1" value="13"/><button id="sw-l-play" aria-label="Play sensitivity">▶</button></div>
+    </div>
+  </div>
+  <div class="sg-body">
+    <div class="sg-left">
+      <span class="mb-letter">(a)</span>
+      <div class="sw-view">
+        <canvas class="sw-sphere" role="img" aria-label="Sphere of radius 10 with the colony coloured by its pointwise growth rate"></canvas>
+        <div class="sw-cbar">
+          <div class="sw-cbar-label">$e^{-\lambda p}$</div>
+          <div class="sw-cbar-row">
+            <canvas class="sw-bar" aria-hidden="true"></canvas>
+            <div class="sw-ticks"><span>1</span><span>0.5</span><span>0</span></div>
+          </div>
+        </div>
+      </div>
+      <dl class="sw-read sg-read">
+        <dt>area, $|\Omega|/|\Omega_0|$</dt><dd id="sw-area"></dd>
+        <dt>sphere covered</dt><dd id="sw-cover"></dd>
+        <dt>growth rate, $|\dot\Omega|/|\Omega|$</dt><dd id="sw-rate"></dd>
+        <dt>smallest $e^{-\lambda p}$ (at the pole)</dt><dd id="sw-gmin"></dd>
+      </dl>
+    </div>
+    <div class="rw-panel sg-right">
+      <div class="rw-plot">
+        <span class="rw-letter sg-letter">(b)</span>
+        <div class="rw-ylabel">surface area, $|\Omega|/|\Omega_0|$</div>
+        <svg id="sw-plot" viewBox="0 0 340 280" role="img" aria-label="Area against time on spheres of several radii at the chosen sensitivity"></svg>
+      </div>
+      <div class="rw-xlabel">time, $t$</div>
+      <div class="rg-legend sg-legend">
+        <span><span class="rg-sw sg-sw sg-c0 sg-thick"></span>$R = 10$</span>
+        <span><span class="rg-sw sg-sw sg-c1"></span>12</span>
+        <span><span class="rg-sw sg-sw sg-c2"></span>14</span>
+        <span><span class="rg-sw sg-sw sg-c3"></span>18</span>
+        <span><span class="rg-sw sg-sw sg-c4"></span>26</span>
+        <span><span class="rg-sw sg-sw sg-c5"></span>42</span>
+        <span><span class="rg-sw sg-sw sg-plane"></span>$R \to \infty$</span>
+      </div>
+    </div>
+  </div>
+</div>
+  <figcaption><b>Figure 3.</b> (a) An axisymmetric colony on a sphere of radius $R = 10$, coloured by its pointwise growth rate $e^{-\lambda p}$. The colony starts from area $4\pi$ at the north pole and is shown until it covers 99.5% of the sphere. Growth is fastest at the edge and is suppressed in the interior as $\lambda$ grows. (b) Area against time on spheres of several radii at the same $\lambda$, all starting from $|\Omega_0| = 4\pi$; the marker is the colony in (a). The time to reach $|\Omega| = 400\pi$ decreases with $R$ and approaches the planar solution (dashed) as $R \to \infty$; without sensing ($\lambda = 0$) the curves coincide. Move the sliders, or press play, to scan through time and sensitivity. $\lambda$ steps through 0 and 19 values from $0.01$ to $10$, spaced evenly on a log scale, with the area held fixed as it changes (dotted line).</figcaption>
+</figure>
+
+<p>All radii grow at a similar rate at first. Later, colonies on larger spheres grow faster, and the plane is the fastest case: it reaches $100|\Omega_0|$ about 25% sooner than the sphere with $R = 10$. For a fixed area, a colony on a larger sphere has a longer perimeter. Each unit of edge then needs to move less to add the same area, so the interior pressure is lower and sensing slows growth less.</p>
+
+<figure class="fig4">
+<div class="widget" id="rate-widget">
+  <div class="w-title">Growth rate against cap angle on a sphere of radius $R = 10$</div>
+  <div class="sw-ctl rw-ctl">
+    <label for="rw-l"><span>sensitivity, $\lambda$</span><output id="rw-l-val"></output></label>
+    <div class="sw-row"><input type="range" id="rw-l" min="0" max="99" step="1" value="10"/><button id="rw-play" aria-label="Play sensitivity">▶</button></div>
+    <div class="rw-read">angle of maximal growth, $H^* =$ <output id="rw-h-val"></output></div>
+  </div>
+  <div class="rw-panels">
+    <div class="rw-panel">
+      <div class="rw-plot">
+        <span class="rw-letter">(a)</span>
+        <div class="rw-ylabel">growth rate, $|\dot\Omega|/|\dot\Omega|_{\rm max}$</div>
+        <svg id="rw-a" viewBox="0 0 420 300" role="img" aria-label="Normalized growth rate against polar angle for the chosen sensitivity"></svg>
+      </div>
+      <div class="rw-xlabel">polar angle, $H$</div>
+    </div>
+    <div class="rw-panel">
+      <div class="rw-plot">
+        <span class="rw-letter">(b)</span>
+        <div class="rw-ylabel">angle of maximal growth, $H^*$</div>
+        <svg id="rw-b" viewBox="0 0 420 300" role="img" aria-label="Angle of maximal growth against sensitivity; click or drag to choose the sensitivity"></svg>
+      </div>
+      <div class="rw-xlabel">stress sensitivity, $\lambda$</div>
+    </div>
+  </div>
+</div>
+  <figcaption><b>Figure 4.</b> (a) Growth rate, normalized by its maximum, against the cap angle $H$ for the chosen $\lambda$ (green), with the curves for $\lambda = 0$, $0.01$, $0.1$ and $1$ in grey. For every $\lambda &gt; 0$ it has an interior maximum $H^*$ (marker). (b) The angle of fastest growth $H^*$ drops sharply once $\lambda &gt; 0$ and tends to the equator, $\pi/2$, as $\lambda$ increases. Move the slider, press play, or click or drag on (b) to choose $\lambda$.</figcaption>
+</figure>
+
+<p>Without sensing, the growth rate increases monotonically with $H$. With sensing, it peaks near the equator, where the perimeter is longest, and the curve becomes increasingly symmetric about $\pi/2$ as $\lambda$ grows. This follows from growth scaling with the perimeter when $\lambda$ is large.</p>
+</section>
+
+<!-- ═══════════════════════════════ ROUGH ═══════════════════════════════ -->
+<section id="rough" data-title="Periodic surfaces">
+<h2>Growth on periodic surfaces<a class="anchor" href="#rough">¶</a></h2>
+
+<p>Next consider a surface that is flat on average but corrugated on a small scale $\varepsilon$, given as the graph $z = h_\varepsilon(\xi,\eta) = \varepsilon\,h(\xi/\varepsilon, \eta/\varepsilon)$ with $h$ periodic on the unit cell. For the lotus leaf, features are about 10&nbsp;µm against a colony of about 1&nbsp;mm, so $\varepsilon \sim 10^{-2}$. The metric is $\mathbf{G}_\varepsilon = \mathbf{I} + \nabla h_\varepsilon\otimes\nabla h_\varepsilon$ and $J_\varepsilon = (1 + |\nabla h_\varepsilon|^2)^{1/2}$. The pressure solves</p>
+
+<div class="math-display">$$
+-\nabla\cdot\big(J_\varepsilon\mathbf{G}_\varepsilon^{-1}\nabla p_\varepsilon\big) = J_\varepsilon\,e^{-\lambda p_\varepsilon}\ \ \text{in } \Omega^*,
+\qquad p_\varepsilon = 0 \ \ \text{on } \partial\Omega^* .
+$$</div>
+
+<h3 id="homogenization">Homogenization<a class="anchor" href="#homogenization">¶</a></h3>
+
+<p>A two-scale expansion in the fast variable $\boldsymbol{\xi}' = \boldsymbol{\xi}/\varepsilon$ gives, as $\varepsilon \to 0$, a growth problem on a <em>flat</em> domain with an effective mobility tensor $\mathbf{K}^*$:</p>
+
+<div class="math-display">$$
+\mathbf{u}^* + \mathbf{K}^*\nabla p^* = \mathbf{0},
+\qquad
+\nabla\cdot\mathbf{u}^* = e^{-\lambda p^*} \ \ \text{in } \Omega^*,
+\qquad
+p^* = 0 \ \ \text{on } \partial\Omega^*,
+$$</div>
+
+<div class="math-display">$$
+\mathbf{K}^* = \langle J\rangle^{-1}\big(\langle J\mathbf{G}^{-1}\rangle + \mathbf{A}\big),
+\qquad
+A_{ij} = \mathbf{e}_i\cdot\langle J\mathbf{G}^{-1}\nabla_{\boldsymbol{\xi}'}w_j\rangle .
+$$</div>
+
+<p>Here $\langle\cdot\rangle$ is the average over the unit cell $\mathbb{T}^2$, and $w_j$ solves the periodic cell problem $-\nabla_{\boldsymbol{\xi}'}\cdot(J\mathbf{G}^{-1}\nabla_{\boldsymbol{\xi}'}w_j) = [\nabla_{\boldsymbol{\xi}'}\cdot J\mathbf{G}^{-1}]\cdot\mathbf{e}_j$. True and reference areas are related by $|\Omega_\varepsilon| \to J^*|\Omega^*|$, with $J^* = \langle J\rangle$.</p>
+
+<h3 id="bounds">The roughness tensor<a class="anchor" href="#bounds">¶</a></h3>
+
+<p>$\mathbf{K}^*$ plays the role of a permeability: growth is favoured along its eigenvector with the larger eigenvalue. Because the eigenvalues of $\mathbf{G}$ are $1$ and $J^2$, the eigenvalues of $\mathbf{K}^*$ are bounded:</p>
+
+<div class="math-display">$$
+\Big(\frac{1}{J^*}\Big)^2 \le \mu_{\min}(\mathbf{K}^*) \le \mu_{\max}(\mathbf{K}^*) \le 1 .
+$$</div>
+
+<p>Equality holds only when $\mathbf{K}^* = \mathbf{I}$. The lower bound can be made as small as desired by scaling up $h$.</p>
+
+<h3 id="anisotropy">Anisotropy accelerates growth<a class="anchor" href="#anisotropy">¶</a></h3>
+
+<p>Two surfaces are compared, both with amplitude $a$: a one-dimensional wave $h = a\sin(2\pi\xi')$ and an egg-crate $h = a\sin(2\pi\xi')\sin(2\pi\eta')$. The cell problem is solved by Fourier collocation on a $31\times31$ grid. The homogenized problem on a disk of true area $\pi$ is solved by Chebyshev–Fourier collocation in polar coordinates.</p>
+
+<figure class="fig5">
+<div class="widget" id="roughness-widget">
+  <div class="w-title">Homogenized growth on a corrugated surface, $\lambda = 1$</div>
+  <div class="rg-top">
+    <div class="rg-modes" role="group" aria-label="Surface">
+      <button type="button" data-rg-mode="1" aria-pressed="true"><span class="rg-sw rg-sw1"></span>one-dimensional wave</button>
+      <button type="button" data-rg-mode="2" aria-pressed="false"><span class="rg-sw rg-sw2"></span>two-dimensional wave</button>
+    </div>
+    <div class="sw-ctl rg-ctl">
+      <label for="rg-a"><span>roughness amplitude, $a$</span><output id="rg-a-val"></output></label>
+      <div class="sw-row"><input type="range" id="rg-a" min="0" max="1" step="0.005" value="0.5"/><button id="rg-play" aria-label="Play amplitude">▶</button></div>
+    </div>
+  </div>
+  <div class="rg-body">
+    <div class="rg-left">
+      <div class="sw-view">
+        <canvas class="rg-disk" role="img" aria-label="Disk coloured by the pointwise growth rate, with streamlines"></canvas>
+        <div class="sw-cbar">
+          <div class="sw-cbar-label">$\gamma(p)$</div>
+          <div class="sw-cbar-row">
+            <canvas class="rg-bar" aria-hidden="true"></canvas>
+            <div class="sw-ticks"><span>1</span><span>0.9</span><span>0.8</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-h"><span id="rg-h1">$h = a\sin(2\pi\xi')$</span><span id="rg-h2" hidden>$h = a\sin(2\pi\xi')\sin(2\pi\eta')$</span></div>
+      <dl class="sw-read rg-read">
+        <dt>growth rate, $|\dot\Omega|/|\Omega|$</dt><dd id="rg-rate"></dd>
+        <dt>roughness tensor, $K^*_{11}$, $K^*_{22}$</dt><dd><span id="rg-k11"></span>, <span id="rg-k22"></span></dd>
+        <dt>area element, $J^*$</dt><dd id="rg-j"></dd>
+      </dl>
+    </div>
+    <div class="rw-panel rg-right">
+      <div class="rw-plot">
+        <div class="rw-ylabel">growth rate, $|\dot\Omega|/|\Omega|$</div>
+        <svg id="rg-plot" viewBox="0 0 420 300" role="img" aria-label="Growth rate against roughness amplitude for the three surfaces"></svg>
+      </div>
+      <div class="rw-xlabel">roughness amplitude, $a$</div>
+      <div class="rg-legend">
+        <span><span class="rg-sw rg-sw0"></span>$h = 0$</span>
+        <span><span class="rg-sw rg-sw1"></span>$h = a\sin(2\pi\xi')$</span>
+        <span><span class="rg-sw rg-sw2"></span>$h = a\sin(2\pi\xi')\sin(2\pi\eta')$</span>
+      </div>
+    </div>
+  </div>
+</div>
+  <figcaption><b>Figure 5.</b> Growth on homogenized surfaces, with $\lambda = 1$. Left: the colony, a disk of true area $\pi$ shown scaled to unit radius, coloured by the pointwise growth rate $e^{-\lambda p^*}$, with velocity streamlines. Right: the total growth rate $|\dot\Omega|/|\Omega|$ against the roughness amplitude $a$ for a flat surface, the one-dimensional wave and the two-dimensional wave; the marker follows the chosen surface. On the one-dimensional wave the streamlines turn to run across the ridges (along $\eta$) and growth speeds up as $a$ increases. The two-dimensional wave has an isotropic $\mathbf{K}^*$, so its colony is the same as on a flat surface at every amplitude. Choose a surface, then move the slider or press play.</figcaption>
+</figure>
+
+<p>The egg-crate gives an isotropic $\mathbf{K}^*$ and exactly the flat growth rate. The one-dimensional wave gives $K_{11} &lt; K_{22}$, and its growth rate rises with $a$ towards the stress-free value of 1. Rescaling the axes by $\sqrt{K_{11}}$ and $\sqrt{K_{22}}$ explains this. For these surfaces $J^*\sqrt{K_{11}K_{22}} = 1$, so the problem is equivalent to growth on an ellipse of area $\pi$ and aspect ratio $\sqrt{K_{11}/K_{22}}$. As $a\to\infty$ that ellipse becomes an infinitely thin line, and the pressure inside it vanishes.</p>
+
+<p>The moving-boundary problem is solved with <a href="https://github.com/danfortunato/surfacefun">surfacefun</a>, a fast spectral-element solver for surface PDEs, using order-12 elements, elliptic grid generation and remeshing at every step, with RK4 and $\Delta t = 0.05$.</p>
+
+<figure class="fig6">
+<div class="widget" id="moving-widget">
+  <div class="w-title">Moving boundary on homogenized surfaces, $\lambda = 1$</div>
+  <div class="sw-ctl mb-ctl">
+    <label for="mb-t"><span>time, $t$</span><output id="mb-t-val"></output></label>
+    <div class="sw-row"><input type="range" id="mb-t" min="0" max="3.1" step="0.01" value="3.1"/><button id="mb-play" aria-label="Play time">▶</button></div>
+  </div>
+  <div class="mb-body">
+    <div class="mb-shapes">
+      <div class="mb-shape">
+        <span class="mb-letter">(a)</span>
+        <svg id="mb-iso-svg" role="img" aria-label="Colony on the two-dimensional wave"></svg>
+        <div class="mb-cap"><span class="rg-sw rg-sw2"></span>$h = a\sin(2\pi\xi')\sin(2\pi\eta')$</div>
+      </div>
+      <div class="mb-shape">
+        <span class="mb-letter">(b)</span>
+        <svg id="mb-aniso-svg" role="img" aria-label="Colony on the one-dimensional wave"></svg>
+        <div class="mb-cap"><span class="rg-sw rg-sw1"></span>$h = a\sin(2\pi\xi')$</div>
+      </div>
+      <dl class="sw-read mb-read">
+        <dt>area $|\Omega|/|\Omega_0|$, (a)</dt><dd id="mb-iso"></dd>
+        <dt>area $|\Omega|/|\Omega_0|$, (b)</dt><dd id="mb-aniso"></dd>
+        <dt>aspect ratio of (b)</dt><dd id="mb-ar"></dd>
+      </dl>
+    </div>
+    <div class="rw-panel mb-right">
+      <div class="rw-plot">
+        <span class="rw-letter">(c)</span>
+        <div class="rw-ylabel">$|\Omega|/|\Omega_0|$</div>
+        <svg id="mb-plot" viewBox="0 0 340 270" role="img" aria-label="Area against time for the two surfaces"></svg>
+      </div>
+      <div class="rw-xlabel">time, $t$</div>
+    </div>
+  </div>
+</div>
+  <figcaption><b>Figure 6.</b> Evolution of the homogenized domain for (a) the two-dimensional wave, where it expands radially, and (b) the one-dimensional wave, where it elongates along the direction orthogonal to the wave. Earlier shapes, at five equally spaced times of each run, are nested inside the current one and shaded from early (light) to late (dark). (c) Area against time, with markers at the current time: the colony grows faster over the anisotropic surface. Each run starts from a circle of physical area $\pi$ with $\lambda = 1$ and stops at ten times the initial area. Move the slider or press play to follow the growth.</figcaption>
+</figure>
+</section>
+
+<!-- ═══════════════════════════════ OPTIMAL ═══════════════════════════════ -->
+<section id="optimal" data-title="Optimal surfaces">
+<h2>Asymptotically optimal surfaces<a class="anchor" href="#optimal">¶</a></h2>
+
+<p>Since geometry can either slow or speed growth, it is natural to ask which surface minimizes or maximizes $|\dot\Omega|/|\Omega|$ at fixed area. The answer is that neither extreme is attained. Both bounds are approached by surfaces whose perimeter goes to zero or to infinity, which follows from growth scaling with the perimeter.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th></th><th>Surface</th><th>Perimeter</th><th>Growth rate</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Infimum</b></td>
+      <td>Sharp cone, opening $\varepsilon \to 0$: $\mathbf{x}_\varepsilon = (\varepsilon\eta\cos\xi,\ \varepsilon\eta\sin\xi,\ \alpha(\varepsilon)\eta)$</td>
+      <td>$2\pi\varepsilon \to 0$</td>
+      <td>$|\dot\Omega_\varepsilon|/|\Omega_\varepsilon| = 8c(\lambda/\varepsilon^2) = O(\varepsilon) \to 0$</td>
+    </tr>
+    <tr>
+      <td><b>Supremum</b></td>
+      <td>Thin strip $|\xi| &lt; \pi/(4\varepsilon)$, $|\eta| &lt; \varepsilon$ in the plane</td>
+      <td>$\sim \pi/(2\varepsilon) \to \infty$</td>
+      <td>$\|p_\varepsilon\|_\infty \le \varepsilon^2$, so $|\dot\Omega_\varepsilon|/|\Omega_\varepsilon| \to 1$</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>So $\inf |\dot\Omega|/|\Omega| = 0$ and $\sup |\dot\Omega|/|\Omega| = 1$. Neither can be reached by a domain of nonzero area, because $e^{-\lambda p} &gt; 0$ and $p \not\equiv 0$. Both examples are instantaneous. The cone stays near-optimal as the colony grows up it, but the strip thickens as it grows. Whether a surface can hold a growing colony near either bound is left open.</p>
+</section>
+
+<!-- ═══════════════════════════════ CODE ═══════════════════════════════ -->
+<section id="code" data-title="Code">
+<h2>Code<a class="anchor" href="#code">¶</a></h2>
+
+<h3 id="install">Installation<a class="anchor" href="#install">¶</a></h3>
+
+<p>The code is MATLAB (tested with R2022a) and depends on two packages, which must be on the MATLAB path:</p>
+<ul>
+  <li><a href="https://www.chebfun.org/">chebfun</a>: see its site for installation.</li>
+  <li><a href="https://github.com/scottweady/surfacefun">surfacefun</a>, a fork of <a href="https://github.com/danfortunato/surfacefun">danfortunato/surfacefun</a>: clone it and add it to the path.</li>
+</ul>
+
+<pre><code>git clone https://github.com/scottweady/surface-growth.git</code></pre>
+
+<p>Running <code>setup.m</code> from the repository root adds this repository's <code>src/</code> and <code>utils/</code> folders to the path.</p>
+
+<h3 id="quickstart">Quick start<a class="anchor" href="#quickstart">¶</a></h3>
+
+<pre><code>setup                          <span class="c">% add src/ and utils/ to the path</span>
+
+cd data,  makedata, cd ..      <span class="c">% solve and save figure data (skips existing .mat files)</span>
+cd figs,  makefigs, cd ..      <span class="c">% write figs/output/fig2.pdf ... fig6.pdf</span>
+cd test,  runtests, cd ..      <span class="c">% convergence studies, written to test/output/</span></code></pre>
+
+<div class="admonition">
+  <div class="title">Precomputed data</div>
+  <p>The figure data in <code>data/</code> is committed, so <code>makefigs</code> runs without re-solving anything. To force a re-solve, delete the corresponding <code>.mat</code> file and run <code>makedata</code> again.</p>
+</div>
+
+<p>A single solve looks like this. The example computes the instantaneous growth rate of a colony covering a hemisphere of radius 10, and the homogenized growth rate over a one-dimensional wave:</p>
+
+<pre><code>setup
+lambda = 1;
+
+<span class="c">% Spherical cap: edge velocity, pressure and velocity on the polar grid</span>
+[U, p, eta, u] = growthSphere(pi/2, lambda, 10, 100);
+
+<span class="c">% Roughness tensor of h = a sin(2 pi x), then the homogenized growth rate</span>
+a = 0.5;
+[K, J] = roughnessTensor(@(x, y) a*sin(2*pi*x));
+dAdt   = growthHomogenized(lambda, K, J);
+dAdt / pi                      <span class="c">% growth rate per unit area; 1 is stress-free</span></code></pre>
+
+<h3 id="solvers">Solvers<a class="anchor" href="#solvers">¶</a></h3>
+
+<p>The core solvers in <code>src/</code> each solve the pressure problem $-\nabla\cdot(\mathbf{K}\nabla p) = e^{-\lambda p}$ by Newton's method, on a different geometry:</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Function</th><th>Solves</th><th>Discretization</th></tr></thead>
+  <tbody>
+    <tr><td><code>[U, p] = growth(Omega, lambda, K)</code></td><td>Growth flow on a general <code>surfacemesh</code>, optionally anisotropic ($\mathbf{K}$ defaults to $\mathbf{I}$). Returns the Cartesian velocity $\mathbf{U} = -\mathbf{K}\nabla p$.</td><td>Spectral elements (surfacefun)</td></tr>
+    <tr><td><code>[dOmegadt, u, v, p, x, y] = growthHomogenized(lambda, K, J, Nr, Ntheta)</code></td><td>Homogenized problem on a disk of radius $1/\sqrt{J}$. Returns the area growth rate and the fields.</td><td>Chebyshev–Fourier in polar coordinates (32×31 default)</td></tr>
+    <tr><td><code>[U, p, h, u] = growthSphere(H, lambda, R, N)</code></td><td>Axisymmetric growth on a spherical cap of angle $H$ and radius $R$. Returns the edge velocity and fields.</td><td>1D Chebyshev collocation</td></tr>
+    <tr><td><code>[K, J] = roughnessTensor(h, N)</code></td><td>Cell problem for a periodic graph $z = h(x,y)$ on $[0,1]^2$. Returns $\mathbf{K}^*$ and $J^*$.</td><td>Fourier collocation ($N = 31$ default)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><code>utils/</code> holds shared helpers: an RK4 stepper, figure styling, colormaps and a progress bar.</p>
+
+<h3 id="figures">Reproducing the figures<a class="anchor" href="#figures">¶</a></h3>
+
+<p>The scripts in <code>scripts/</code> run the simulations. <code>data/makedata.m</code> runs them and saves their output, and each <code>figs/scripts/figN.m</code> plots it.</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Figure</th><th>Script</th><th>Data</th><th>Content</th></tr></thead>
+  <tbody>
+    <tr><td><a href="#sphere">2</a></td><td><code>sphereProfiles.m</code></td><td><code>fig2.mat</code></td><td>Pressure and velocity on caps $H = \pi/2$ for several $R$. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
+    <tr><td><a href="#sphere-numerics">3</a></td><td><code>sphereGrowth.m</code></td><td><code>fig3.mat</code></td><td>Growth trajectories on spheres, plus the planar limit. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
+    <tr><td><a href="#sphere-numerics">4</a></td><td><code>sphereGrowthRate.m</code></td><td><code>fig4.mat</code></td><td>Growth rate against $H$, and $H^*(\lambda)$. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
+    <tr><td><a href="#anisotropy">5</a></td><td><code>roughnessGrowthRate.m</code></td><td><code>fig5.mat</code></td><td>Homogenized growth rate against amplitude, with flow fields. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
+    <tr><td><a href="#anisotropy">6</a></td><td><code>movingBoundaryRoughness.m</code> (calls <code>growthEvolve.m</code>)</td><td><code>fig6/isotropic.mat</code>, <code>fig6/anisotropic.mat</code></td><td>Moving-boundary growth on isotropic and anisotropic surfaces. Interactive on this page, from <code>docs/makeinteractive.m</code></td></tr>
+    <tr><td><a href="#stability">—</a></td><td><code>planarStability.m</code>, <code>planarStabilitySymbolic.m</code></td><td>—</td><td>Dispersion relation $\sigma_m$, checked against the 2D solver and derived symbolically</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><code>figs/scripts/hero.m</code> makes the sphere image in the README. On this page, Figures 2–6 are interactive and drawn in the browser from data generated by <code>docs/makeinteractive.m</code> (<code>docs/assets/sphere-profiles.js</code>, <code>sphere-growth.js</code>, <code>sphere-radii.js</code>, <code>sphere-rate.js</code>, <code>roughness.js</code>, <code>moving-boundary.js</code>), using the same solvers and committed data as the paper's figures. <code>docs/makeschematic.py</code> renders the light and dark versions of the Fig. 1 schematic by recolouring the exported PDF; it needs Ghostscript.</p>
+
+<h3 id="tests">Convergence tests<a class="anchor" href="#tests">¶</a></h3>
+
+<p><code>test/runtests.m</code> runs the convergence studies and writes their output to <code>test/output/</code>:</p>
+<ul>
+  <li><code>sphereConvergence.m</code>: the spherical-cap solver in $N$ and $\Delta t$.</li>
+  <li><code>roughnessConvergence.m</code>: the roughness tensor in the cell-problem resolution.</li>
+  <li><code>homogenizationConvergence.m</code>: the homogenized disk solver in $(N_r, N_\theta)$.</li>
+  <li><code>growthConvergence.m</code>: the moving-boundary simulation.</li>
+</ul>
+</section>
+
+<!-- ═══════════════════════════════ CITING ═══════════════════════════════ -->
+<section id="citing" data-title="Citing">
+<h2>Citing<a class="anchor" href="#citing">¶</a></h2>
+
+<p>If you use this code, please cite the paper:</p>
+<p style="padding-left:1.25rem;border-left:3px solid var(--border)">S. Weady, Geometric regulation of stress-limited growth on surfaces, arXiv:2611.14159 (2026). <a href="https://arxiv.org/abs/2611.14159">arxiv.org/abs/2611.14159</a></p>
+
+<pre><code>@article{weady2026geometric,
+  title   = {Geometric regulation of stress-limited growth on surfaces},
+  author  = {Weady, Scott},
+  journal = {arXiv preprint arXiv:2611.14159},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2611.14159}
+}</code></pre>
+
+<p>The growth model and the planar solution come from:</p>
+<p style="padding-left:1.25rem;border-left:3px solid var(--border)">S. Weady, B. Palmer, A. Lamson, T. Kim, R. Farhadifar and M. J. Shelley, Mechanics and morphology of proliferating cell collectives with self-inhibiting growth, <em>Physical Review Letters</em> <b>133</b>, 158402 (2024).</p>
+
+<p>The surface solver is described in D. Fortunato, A high-order fast direct solver for surface PDEs, <em>SIAM J. Sci. Comput.</em> <b>46</b>(4), A2582–A2606 (2024).</p>
+
+<footer>
+  Source: <a href="https://github.com/scottweady/surface-growth">github.com/scottweady/surface-growth</a> · The Flatiron Institute is a division of the Simons Foundation.
+</footer>
+</section>
+
+  </article>
+</div>
+
+<script src="assets/sphere-growth.js"></script>
+<script src="assets/sphere-radii.js"></script>
+<script src="assets/sphere-widget.js"></script>
+<script src="assets/sphere-rate.js"></script>
+<script src="assets/rate-widget.js"></script>
+<script src="assets/roughness.js"></script>
+<script src="assets/roughness-widget.js"></script>
+<script src="assets/moving-boundary.js"></script>
+<script src="assets/moving-widget.js"></script>
+<script src="assets/sphere-profiles.js"></script>
+<script src="assets/profile-widget.js"></script>
+<script>
+(function () {
+  /* Theme toggle: cycles to the opposite of what is currently shown */
+  var root = document.documentElement;
+  document.getElementById("theme-btn").addEventListener("click", function () {
+    var cur = root.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    var next = cur === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("sg-theme", next); } catch (e) {}
+  });
+
+  /* Mobile drawer */
+  var body = document.body;
+  document.getElementById("menu-btn").addEventListener("click", function (e) {
+    e.stopPropagation(); body.classList.toggle("menu-open");
+  });
+  document.querySelector(".main").addEventListener("click", function () { body.classList.remove("menu-open"); });
+  document.querySelectorAll(".sidebar a").forEach(function (a) {
+    a.addEventListener("click", function () { body.classList.remove("menu-open"); });
+  });
+
+  /* Scroll spy: highlight the current section and subsection in the sidebar */
+  var links = Array.prototype.slice.call(document.querySelectorAll(".sidebar nav a"));
+  var targets = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  var crumb = document.getElementById("crumb");
+  function spy() {
+    var y = window.scrollY + 90, idx = 0;
+    targets.forEach(function (t, i) { if (t && t.getBoundingClientRect().top + window.scrollY <= y) idx = i; });
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) idx = targets.length - 1;
+    links.forEach(function (a) { a.classList.remove("active"); });
+    document.querySelectorAll(".sidebar li.open").forEach(function (li) { li.classList.remove("open"); });
+    var a = links[idx]; a.classList.add("active");
+    var top = a.closest(".sidebar nav > ul > li");
+    if (top) {
+      top.classList.add("open");
+      var sec = top.querySelector(":scope > a");
+      var title = sec.textContent;
+      if (sec !== a) { sec.classList.add("active"); title += " › " + a.textContent; }
+      crumb.textContent = title;
+    }
+  }
+  window.addEventListener("scroll", spy, { passive: true });
+  spy();
+
+  /* Math */
+  window.addEventListener("load", function () {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.querySelector(".content"), {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>
